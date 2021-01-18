@@ -9,6 +9,15 @@
 (def ^:private player-color {:player1 [:white :black]
                              :player2 [:black :white]})
 
+(def game [[:player1 :player1 :player1 :player1 :player1 :player1 :player1 :player1]
+           [:player1 :player1 :player1 :player1 :player1 :player1 :player1 :player1]
+           [:player1 :player1 :player1 :player1 :player1 :player1 :player1 :player1]
+           [nil nil nil nil nil nil nil nil]
+           [nil nil nil nil nil nil nil nil]
+           [:player2 :player2 :player2 :player2 :player2 :player2 :player2 :player2]
+           [:player2 :player2 :player2 :player2 :player2 :player2 :player2 :player2]
+           [:player2 :player2 :player2 :player2 :player2 :player2 :player2 :player2]])
+
 (defn draw-squares
   [^Board board]
   (loop [x 0
@@ -43,8 +52,15 @@
       (c2d/set-color (->> player-color (player) (first)))
       (c2d/ellipse x0 y0 s4 s4))))
 
+(defn draw-game
+  "game is a 8 element vector with each element being a 8 element vector"
+  [^Board board game]
+  (doseq [x (range 0 8)
+          y (range 0 8)]
+    (when-let [player ((game y) x)]
+      (draw-stone board x y player))))
+
 (defn create-board
   []
   (let [canvas (c2d/canvas board-size board-size)]
     (Board. canvas (c2d/show-window canvas "Dame"))))
-
