@@ -1,8 +1,7 @@
-# dame
+# Dame
+A Clojure implementation of Dame, a german checker game.
 
 ![](resources/Dame.png)
-
-A Clojure implementation of Dame, a german checker game.
 
 It is played on a 8x8 black and white grid, with the lowest left square being black.
 Each player starts with 3 rows of stones on their side. Player 1 with white stones, Player 2 with black stones.
