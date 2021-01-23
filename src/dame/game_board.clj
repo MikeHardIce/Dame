@@ -9,14 +9,13 @@
 (def ^:private player-color {:player1 [:white :black]
                              :player2 [:black :white]})
 
-(def game [[:player1 :player1 :player1 :player1 :player1 :player1 :player1 :player1]
-           [:player1 :player1 :player1 :player1 :player1 :player1 :player1 :player1]
-           [:player1 :player1 :player1 :player1 :player1 :player1 :player1 :player1]
-           [nil nil nil nil nil nil nil nil]
-           [nil nil nil nil nil nil nil nil]
-           [:player2 :player2 :player2 :player2 :player2 :player2 :player2 :player2]
-           [:player2 :player2 :player2 :player2 :player2 :player2 :player2 :player2]
-           [:player2 :player2 :player2 :player2 :player2 :player2 :player2 :player2]])
+(defn draw-square
+  ([^Board board x y color] (draw-square board x y color true))
+  ([^Board board x y color fill]
+   (c2d/with-canvas-> (:canvas board)
+                      (c2d/set-color color)
+                      (c2d/set-stroke 8)
+                      (c2d/rect (* x tile-size) (* y tile-size) tile-size tile-size (not fill)))))
 
 (defn draw-squares
   [^Board board]
@@ -24,9 +23,7 @@
          y 0
          colors [:white :black]]
     (when (and (< (+ x y) 15))
-      (c2d/with-canvas-> (:canvas board)
-        (c2d/set-color (first colors))
-        (c2d/rect (* x tile-size) (* y tile-size) (* (inc x) tile-size) (* (inc y) tile-size)) )
+      (draw-square board x y (first colors))
       (recur (if (> x 7) 0 (inc x))
              (if (> x 7) (inc y) y)
              (reverse colors)))))
@@ -60,7 +57,20 @@
     (when-let [player ((game y) x)]
       (draw-stone board x y player))))
 
+(defn select-stone
+  [^Board board x y]
+  (draw-square board x y :green false))
+
 (defn create-board
   []
   (let [canvas (c2d/canvas board-size board-size)]
     (Board. canvas (c2d/show-window canvas "Dame"))))
+
+; (defn get-tile
+;   "Returns the tile that contains x and y"
+;   [x y]
+;   (let []))
+
+; (defmethod c2d/mouse-event ["Dame" :mouse-pressed] 
+;   [event state]
+;   )
