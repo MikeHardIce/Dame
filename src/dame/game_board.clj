@@ -84,9 +84,7 @@
 
 (defmethod c2d/mouse-event ["Dame" :mouse-pressed]
   [event state]
-  (println "mouse pressed")
   (let [window (:window @current-board)
         x (c2d/mouse-x window)
         y (c2d/mouse-y window)]
-    (println (str "x: " x " y:" y))
     (game :tile-clicked (get-tile x y))))

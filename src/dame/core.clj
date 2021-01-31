@@ -19,5 +19,6 @@
     (board/draw-game board game)
     (board/select-stone board 2 3)))
 
-(defmethod board/game :tile-clicked [coord]
+(defmethod board/game :tile-clicked 
+  [_ coord]
   (println (str "tile: (" (first coord) "," (second coord) ")")))
