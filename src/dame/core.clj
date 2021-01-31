@@ -1,5 +1,6 @@
 (ns dame.core
-  (:require [dame.game-board :as board])
+  (:require [dame.game-board :as board]
+            [dame.game-logic :as logic])
   (:gen-class))
 
 (def game [[[:player1] [:player1] [:player1] [:player1] [:player1] [:player1] [:player1] [:player1]]
