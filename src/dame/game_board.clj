@@ -3,7 +3,9 @@
 
 (defrecord Board [canvas window])
 
-(defmulti game (fn [type event] type))
+(def current-board (atom nil))
+
+(defmulti game (fn [type data] type))
 
 (defmethod game :default [])
 
@@ -67,8 +69,11 @@
 
 (defn create-board
   []
-  (let [canvas (c2d/canvas board-size board-size)]
-    (Board. canvas (c2d/show-window canvas "Dame"))))
+  (let [canvas (c2d/canvas board-size board-size)
+        new-board (Board. canvas (c2d/show-window canvas "Dame"))]
+    ;; would be nice if clojure2d would have a function to get active windows
+    (reset! current-board new-board)
+    new-board))
 
 (defn get-tile
   "Returns the tile that contains the given x and y coordinates"
@@ -79,4 +84,9 @@
 
 (defmethod c2d/mouse-event ["Dame" :mouse-pressed]
   [event state]
-  (game :loop []))
+  (println "mouse pressed")
+  (let [window (:window @current-board)
+        x (c2d/mouse-x window)
+        y (c2d/mouse-y window)]
+    (println (str "x: " x " y:" y))
+    (game :tile-clicked (get-tile x y))))
