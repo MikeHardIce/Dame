@@ -3,22 +3,21 @@
             [dame.game-logic :as logic])
   (:gen-class))
 
-(def game [[[:player1] [:player1] [:player1] [:player1] [:player1] [:player1] [:player1] [:player1]]
-           [[:player1] [:player1] [:player1] [:player1] [:player1] [:player1] [:player1] [:player1]]
-           [[:player1] [:player1] [:player1] [:player1] [:player1] [:player1] [:player1] [:player1]]
+(def game [[nil [:player2] nil [:player2] nil [:player2] nil [:player2]]
+           [[:player2] nil [:player2] nil [:player2] nil [:player2] nil]
+           [nil [:player2] nil [:player2] nil [:player2] nil [:player2]]
            [nil nil nil nil nil nil nil nil]
            [nil nil nil nil nil nil nil nil]
-           [[:player2] [:player2] [:player2] [:player2] [:player2] [:player2] [:player2] [:player2]]
-           [[:player2] [:player2] [:player2] [:player2] [:player2] [:player2] [:player2] [:player2]]
-           [[:player2] [:player2] [:player2] [:player2] [:player2] [:player2] [:player2] [:player2]]])
+           [[:player1] nil [:player1] nil [:player1] nil [:player1] nil]
+           [nil [:player1] nil [:player1] nil [:player1] nil [:player1]]
+           [[:player1] nil [:player1] nil [:player1] nil [:player1] nil]])
 
 (defn -main
   ""
   []
   (let [board (board/create-board)]
     (board/draw-squares board)
-    (board/draw-game board game)
-    (board/select-stone board 2 3)))
+    (board/draw-game board game)))
 
 (defmethod board/game :tile-clicked 
   [_ coord]
