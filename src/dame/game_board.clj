@@ -3,6 +3,10 @@
 
 (defrecord Board [canvas window])
 
+(defmulti game (fn [type event] type))
+
+(defmethod game :default [])
+
 (def ^:private board-size 1000)
 (def ^:private tile-size 125)
 
@@ -13,9 +17,9 @@
   ([^Board board x y color] (draw-square board x y color true))
   ([^Board board x y color fill]
    (c2d/with-canvas-> (:canvas board)
-                      (c2d/set-color color)
-                      (c2d/set-stroke 8)
-                      (c2d/rect (* x tile-size) (* y tile-size) tile-size tile-size (not fill)))))
+     (c2d/set-color color)
+     (c2d/set-stroke 8)
+     (c2d/rect (* x tile-size) (* y tile-size) tile-size tile-size (not fill)))))
 
 (defn draw-squares
   [^Board board]
@@ -54,7 +58,7 @@
   [^Board board game]
   (doseq [x (range 0 8)
           y (range 0 8)]
-    (when-let [player ((game y) x)]
+    (when-let [player (nth (seq ((game y) x)) 0)]
       (draw-stone board x y player))))
 
 (defn select-stone
@@ -66,11 +70,13 @@
   (let [canvas (c2d/canvas board-size board-size)]
     (Board. canvas (c2d/show-window canvas "Dame"))))
 
-; (defn get-tile
-;   "Returns the tile that contains x and y"
-;   [x y]
-;   (let []))
+(defn get-tile
+  "Returns the tile that contains the given x and y coordinates"
+  [x-coord y-coord]
+  (let [x (Math/floor (/ x-coord tile-size))
+        y (Math/floor (/ y-coord tile-size))]
+    [(int x) (int y)]))
 
-; (defmethod c2d/mouse-event ["Dame" :mouse-pressed] 
-;   [event state]
-;   )
+(defmethod c2d/mouse-event ["Dame" :mouse-pressed]
+  [event state]
+  (game :loop []))
