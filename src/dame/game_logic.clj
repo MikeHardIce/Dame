@@ -27,7 +27,7 @@
         (possible-moves-normal game x y (nth stone 0))
         (possible-moves-dame game x y (nth stone 0))))))
 
-(defn next 
+(defn next-game
   "Returns a new game with the transition [x0 y0] -> [x y] applied"
   [game [x0 y0] [x y]]
   game)

@@ -5,7 +5,7 @@
 
 (def current-board (atom nil))
 
-(defmulti game (fn [type data] type))
+(defmulti game (fn [type ^Board board data] type))
 
 (defmethod game :default [])
 
@@ -87,4 +87,4 @@
   (let [window (:window @current-board)
         x (c2d/mouse-x window)
         y (c2d/mouse-y window)]
-    (game :tile-clicked (get-tile x y))))
+    (game :tile-clicked @current-board (get-tile x y))))
