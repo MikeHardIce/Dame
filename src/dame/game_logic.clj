@@ -12,7 +12,11 @@
   (let [direction (if (= player :player1) -1 1)
         pos-moves [[(inc x) (+ y direction)] [(dec x) (+ y direction)]]
         moves (filter #(within-board? game %) pos-moves)]
-    moves))
+    (filter #(let [x0 (first %)
+                   y0 (second %)
+                   stone (seq ((game y0) x0))]
+               (not= (first stone) player)) 
+            moves)))
 
 (defn possible-moves-dame
   [game x y player]
