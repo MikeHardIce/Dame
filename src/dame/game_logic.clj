@@ -14,7 +14,7 @@
         moves (filter #(within-board? game %) pos-moves)]
     (filter #(let [x0 (first %)
                    y0 (second %)
-                   stone (seq ((game y0) x0))]
+                   stone (seq (:player ((game y0) x0)))]
                (not= (first stone) player)) 
             moves)))
 
@@ -26,7 +26,7 @@
   "Returns a vector consisting of possible next moves"
   [game x y]
   (when (within-board? game [x y])
-    (when-let [stone (seq ((game y) x))]
+    (when-let [stone (seq (:player ((game y) x)))]
       (if (< (count stone) 2)
         (possible-moves-normal game x y (nth stone 0))
         (possible-moves-dame game x y (nth stone 0))))))

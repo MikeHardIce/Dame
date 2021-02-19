@@ -60,7 +60,7 @@
   [^Board board game]
   (doseq [x (range 0 8)
           y (range 0 8)]
-    (when-let [player (nth (seq ((game y) x)) 0)]
+    (when-let [player (nth (seq (:player ((game y) x))) 0)]
       (draw-stone board x y player))))
 
 (defn select-stone
