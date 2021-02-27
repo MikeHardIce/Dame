@@ -12,25 +12,50 @@
            [nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]}]
            [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]]))
 
+(defn unmark-all 
+  [game]
+  (let [new-game (for [y (range (count game))
+                       x (range (count (game y)))]
+                   (let [stone (nth (game y) x)]
+                     (dissoc stone :selected :selection-color)))
+        new-game (partition (count game) new-game)
+        new-game (map vec new-game)]
+    (vec new-game)))
+
+(defn mark-stone 
+  ([game x y] (mark-stone game x y :green))
+  ([game x y selection-color]
+  (let [row (game y)
+        element (nth row x)
+        element (assoc element :selected true :selection-color selection-color)
+        row (assoc row x element)]
+    (assoc game y row))))
+
+(defn mark-moves
+  [game moves]
+  (loop [potential-moves moves
+         game game]
+    (if (seq potential-moves)
+        (let [curr-x (first (first potential-moves))
+              curr-y (second (first potential-moves))]
+          (recur (rest potential-moves) (mark-stone game curr-x curr-y :yellow-green)))
+      game)))
+
 (defn -main
   ""
   []
   (let [board (board/create-board)]
-    (board/draw-squares board)
+    ;;(board/draw-squares board)
     (board/draw-game board @game)))
 
 (defmethod board/game :tile-clicked
   [_ current-board coord]
   (let [x (first coord)
-        y (second coord)]
+        y (second coord)
+        moves (logic/possible-moves @game x y)]
     (println (str "tile: (" x "," y ")"))
-    (board/draw-squares current-board)
-    (board/draw-game current-board @game)
-    (loop [potential-moves (conj (logic/possible-moves @game x y) [x y])]
-      (when (seq potential-moves)
-        (let [curr-x (first (first potential-moves))
-              curr-y (second (first potential-moves))]
-          ;; TODO: Actually dont expose this here, each tile can be a map, with a key :selected
-          ;;           and just let the game board draw the selections 
-          (board/draw-square current-board curr-x curr-y :green false))
-        (recur (rest potential-moves))))))
+    (swap! game unmark-all)
+    (swap! game mark-moves moves)
+    (swap! game mark-stone x y)
+    ;;(board/draw-squares current-board)
+    (board/draw-game current-board @game)))

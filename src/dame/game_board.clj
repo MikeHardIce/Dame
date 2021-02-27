@@ -19,20 +19,22 @@
   ([^Board board x y color] (draw-square board x y color true))
   ([^Board board x y color fill]
    (c2d/with-canvas-> (:canvas board)
+     (c2d/set-color :red)
+     (c2d/text (str "(" x "," y ")  xy: " (* x y) " " (mod (+ x y) 2)) (* x tile-size) (- (* y tile-size) 10))
      (c2d/set-color color)
      (c2d/set-stroke 8)
      (c2d/rect (* x tile-size) (* y tile-size) tile-size tile-size (not fill)))))
 
-(defn draw-squares
-  [^Board board]
-  (loop [x 0
-         y 0
-         colors [:white :black]]
-    (when (and (< (+ x y) 15))
-      (draw-square board x y (first colors))
-      (recur (if (> x 7) 0 (inc x))
-             (if (> x 7) (inc y) y)
-             (reverse colors)))))
+;; (defn draw-squares
+;;   [^Board board]
+;;   (loop [x 0
+;;          y 0
+;;          colors [:white :black]]
+;;     (when (and (< (+ x y) 16))
+;;       (draw-square board x y (first colors))
+;;       (recur (if (> x 7) 0 (inc x))
+;;              (if (> x 7) (inc y) y)
+;;              (reverse colors)))))
 
 (defn draw-stone
   [^Board board x y player]
@@ -60,8 +62,14 @@
   [^Board board game]
   (doseq [x (range 0 8)
           y (range 0 8)]
-    (when-let [player (nth (seq (:player ((game y) x))) 0)]
-      (draw-stone board x y player))))
+    (let [stone ((game y) x)
+          color [:white :black]
+          color-indicator (mod (+ x y) 2)]
+      (if (and (:selected stone) (:selection-color stone))
+        (draw-square board x y (:selection-color stone) false)
+        (draw-square board x y (nth color color-indicator)))
+      (when-let [player (nth (seq (:player stone)) 0)]
+        (draw-stone board x y player)))))
 
 (defn select-stone
   [^Board board x y]
