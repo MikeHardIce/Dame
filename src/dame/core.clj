@@ -45,7 +45,6 @@
   ""
   []
   (let [board (board/create-board)]
-    ;;(board/draw-squares board)
     (board/draw-game board @game)))
 
 (defmethod board/game :tile-clicked
@@ -57,5 +56,4 @@
     (swap! game unmark-all)
     (swap! game mark-moves moves)
     (swap! game mark-stone x y)
-    ;;(board/draw-squares current-board)
     (board/draw-game current-board @game)))

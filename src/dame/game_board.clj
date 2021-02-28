@@ -25,17 +25,6 @@
      (c2d/set-stroke 8)
      (c2d/rect (* x tile-size) (* y tile-size) tile-size tile-size (not fill)))))
 
-;; (defn draw-squares
-;;   [^Board board]
-;;   (loop [x 0
-;;          y 0
-;;          colors [:white :black]]
-;;     (when (and (< (+ x y) 16))
-;;       (draw-square board x y (first colors))
-;;       (recur (if (> x 7) 0 (inc x))
-;;              (if (> x 7) (inc y) y)
-;;              (reverse colors)))))
-
 (defn draw-stone
   [^Board board x y player]
   (let [x0 (+ (* x tile-size) (* 0.5 tile-size))

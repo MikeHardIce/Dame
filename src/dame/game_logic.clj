@@ -31,7 +31,25 @@
         (possible-moves-normal game x y (nth stone 0))
         (possible-moves-dame game x y (nth stone 0))))))
 
+(defn transform-game
+  [game [x0 y0] [x y]]
+  (let [new-pos ((game y) x)
+        old-pos ((game y0) x0)
+        player-from (->> old-pos :player first)
+        player-to (->> new-pos :player first)]
+    (if (not= player-from player-to)
+      (let [old-row (assoc (game y0) x0 nil)
+            new-row (assoc (game y) x new-pos)
+            new-game (assoc game y0 old-row)
+            new-game (assoc new-game y new-row)]
+        new-game)
+      game)))
+
 (defn next-game
   "Returns a new game with the transition [x0 y0] -> [x y] applied"
-  [game [x0 y0] [x y]]
-  game)
+  [game [x0 y0] to]
+   (let [allowed-moves (possible-moves game x0 y0)
+         within (filter #(= % to) allowed-moves)]
+     (if (seq within)
+      (transform-game game [x0 y0] to)
+      game)))
