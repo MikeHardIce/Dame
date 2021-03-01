@@ -39,7 +39,7 @@
         player-to (->> new-pos :player first)]
     (if (not= player-from player-to)
       (let [old-row (assoc (game y0) x0 nil)
-            new-row (assoc (game y) x new-pos)
+            new-row (assoc (game y) x old-pos)
             new-game (assoc game y0 old-row)
             new-game (assoc new-game y new-row)]
         new-game)

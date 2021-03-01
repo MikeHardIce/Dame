@@ -19,11 +19,11 @@
   ([^Board board x y color] (draw-square board x y color true))
   ([^Board board x y color fill]
    (c2d/with-canvas-> (:canvas board)
-     (c2d/set-color :red)
-     (c2d/text (str "(" x "," y ")  xy: " (* x y) " " (mod (+ x y) 2)) (* x tile-size) (- (* y tile-size) 10))
      (c2d/set-color color)
      (c2d/set-stroke 8)
-     (c2d/rect (* x tile-size) (* y tile-size) tile-size tile-size (not fill)))))
+     (c2d/rect (* x tile-size) (* y tile-size) tile-size tile-size (not fill))
+     (c2d/set-color :red)
+     (c2d/text (str "(" x "," y ")") (* x tile-size) (- (* (inc y) tile-size) 10)))))
 
 (defn draw-stone
   [^Board board x y player]
@@ -49,8 +49,8 @@
 (defn draw-game
   "game is a 8 element vector with each element being a 8 element vector"
   [^Board board game]
-  (doseq [x (range 0 8)
-          y (range 0 8)]
+  (doseq [x (range 8)
+          y (range 8)]
     (let [stone ((game y) x)
           color [:white :black]
           color-indicator (mod (+ x y) 2)]

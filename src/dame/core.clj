@@ -51,9 +51,25 @@
   [_ current-board coord]
   (let [x (first coord)
         y (second coord)
-        moves (logic/possible-moves @game x y)]
+        moves (logic/possible-moves @game x y)
+        tile ((@game y) x)]
     (println (str "tile: (" x "," y ")"))
-    (swap! game unmark-all)
-    (swap! game mark-moves moves)
-    (swap! game mark-stone x y)
+    (if (and (seq tile) (:selected tile) (= (:selection-color tile) :yellow-green))
+      (let [y-range (cond 
+                      (and (> y 0) (< y 7)) [(dec y) (inc y)]
+                      (= y 0) [1]
+                      :else [6])
+            near-stones (for [xi (range 8)
+                              yi y-range]
+                          [xi yi (:selection-color ((@game yi) xi))])
+            [[x0 y0]] (filter (fn [item]
+                                (some #(= % :green) item)) 
+                              near-stones)]
+        (println (str " [" x0 " " y0 "] [" x " " y "] "))
+        (swap! game logic/next-game [x0 y0] [x y])
+        (swap! game unmark-all))
+      (do
+        (swap! game unmark-all)
+        (swap! game mark-moves moves)
+        (swap! game mark-stone x y)))
     (board/draw-game current-board @game)))
