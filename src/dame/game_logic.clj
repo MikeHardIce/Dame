@@ -1,13 +1,28 @@
 (ns dame.game-logic)
 
-(defn within-board? 
+(defn within-board?
+  "Checks if the given coordinate is within the board,
+   If so, returns true, otherwise nil" 
   [game [x y]]
   (let [y-max (count game)
         x-max (count (game 0))]
     (and (< y y-max) (< x x-max)
          (>= y 0) (>= x 0))))
 
+(defn is-on-border?
+  "Checks if the given coordinate is on one of the player's border
+   If so, returns the key of the player the border/side belongs to,
+   otherwise nil"
+  [game [x y]]
+  (let [y-max (count game)]
+    (cond
+      (= y y-max) :player1
+      (= y 0) :player2
+      :else nil)))
+
 (defn possible-moves-normal
+  "Hands back a vector of vectors containing the coordinates of the potential
+   next moves of the stone at x y"
   [game x y player]
   (let [direction (if (= player :player1) -1 1)
         pos-moves [[(inc x) (+ y direction)] [(dec x) (+ y direction)]]
@@ -19,11 +34,13 @@
             moves)))
 
 (defn possible-moves-dame
+  "Hands back a vector of vectors containing the coordinates of the potential
+   next moves of the dame (2 stones) at x y"
   [game x y player]
   [[x y]])
 
 (defn possible-moves
-  "Returns a vector consisting of possible next moves"
+  "Returns a vector consisting of possible next moves for the given stone/dame at x y"
   [game x y]
   (when (within-board? game [x y])
     (when-let [stone (seq (:player ((game y) x)))]
@@ -31,7 +48,7 @@
         (possible-moves-normal game x y (nth stone 0))
         (possible-moves-dame game x y (nth stone 0))))))
 
-(defn transform-game
+(defn- transform-game
   [game [x0 y0] [x y]]
   (let [new-pos ((game y) x)
         old-pos ((game y0) x0)

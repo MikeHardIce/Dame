@@ -46,6 +46,20 @@
       (c2d/set-color (->> player-color (player) (first)))
       (c2d/ellipse x0 y0 s4 s4))))
 
+(defn draw-dame-sign
+  "Draws an upsite down cross inside a D at the current tile"
+  [^Board board x y player]
+  (let [x0 (+ (* x tile-size) (* 0.5 tile-size))
+        y0 (+ (* y tile-size) (* 0.5 tile-size))]
+    (c2d/with-canvas-> (:canvas board)
+      (c2d/set-color (->> player-color (player) (second)))
+      (c2d/set-font-attributes 48)
+      (c2d/text "D" (inc x0) (+ y0 18) :center)
+      (c2d/set-stroke 3)
+      (c2d/line x0 (- y0 15) x0 (+ y0 15))
+      (c2d/line (- x0 10) (+ y0 5) (+ x0 10) (+ y0 5))
+      )))
+
 (defn draw-game
   "game is a 8 element vector with each element being a 8 element vector"
   [^Board board game]
@@ -57,8 +71,12 @@
       (if (and (:selected stone) (:selection-color stone))
         (draw-square board x y (:selection-color stone) false)
         (draw-square board x y (nth color color-indicator)))
-      (when-let [player (nth (seq (:player stone)) 0)]
-        (draw-stone board x y player)))))
+      (let [stones (seq (:player stone))
+            player (nth stones 0)]
+        (when player
+          (draw-stone board x y player)
+          (when (> (count stones) 1)
+            (draw-dame-sign board x y player)))))))
 
 (defn select-stone
   [^Board board x y]

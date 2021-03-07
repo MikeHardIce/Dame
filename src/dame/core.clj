@@ -3,14 +3,14 @@
             [dame.game-logic :as logic])
   (:gen-class))
 
-(def game (atom [[nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
+(def game (atom [[nil {:player [:player2 :player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
            [{:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil]
            [nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
            [nil nil nil nil nil nil nil nil]
            [nil nil nil nil nil nil nil nil]
            [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]
            [nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]}]
-           [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]]))
+           [{:player [:player1 :player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]]))
 
 (defn unmark-all 
   [game]
