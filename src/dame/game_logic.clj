@@ -1,6 +1,6 @@
 (ns dame.game-logic)
 
-(defn within-board?
+(defn- within-board?
   "Checks if the given coordinate is within the board,
    If so, returns true, otherwise nil" 
   [game [x y]]
@@ -19,6 +19,30 @@
       (= y y-max) :player1
       (= y 0) :player2
       :else nil)))
+
+(defn get-all-tiles-on-the-way
+  "Returns all the tiles of the game that lay on the path
+   from [x0 y0] to [x y] not including [x0 y0] and [x y]"
+  [game [x0 y0] [x y :as to]]
+  (let [direction-x (if (< x0 x) 1 -1)
+        direction-y (if (< y0 y) 1 -1)]
+    (loop [tiles []
+           cur-x (+ x0 direction-x)
+           cur-y (+ y0 direction-y)]
+      (if (= [cur-x cur-y] to)
+        tiles
+        (recur (conj tiles {:player (:player ((game cur-y) cur-x)) :coord [cur-x cur-y]}) (+ cur-x direction-x) (+ cur-y direction-y))))))
+
+(defn stones-on-the-way 
+  "Returns the stones belonging to the given player
+   that lay in between from and to.
+   Default uses the player 'from' belongs to"
+  ([game [x0 y0 :as from] to] (stones-on-the-way game from to (first (:player ((game y0) x0)))))
+  ([game from to player]
+  (let [tiles (filter #(and (seq (:player %))
+                                (= (first (:player %)) player)) (get-all-tiles-on-the-way game from to))
+        tiles (map #(:coord %) tiles)]
+    (vec tiles))))
 
 (defn possible-moves-normal
   "Hands back a vector of vectors containing the coordinates of the potential
