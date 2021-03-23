@@ -51,7 +51,7 @@
   the diagonal once more if the tile is occupied." 
   [game x y x-fun y-fun player]
   (let [[x0 y0] [(x-fun x) (y-fun y)]
-        player-on-stone (first (seq (:player ((game y0) x0))))]
+        player-on-stone (first (seq (:player (nth (nth game y0 nil) x0 nil))))]
     (if (and player-on-stone (not= player player-on-stone))
       [(x-fun x0) (y-fun y0)]
       [x0 y0])))
@@ -85,11 +85,24 @@
         (possible-moves-normal game x y (nth stone 0))
         (possible-moves-dame game x y (nth stone 0))))))
 
+(defn remove-stones-on-path
+  [game stones]
+  (loop [game game
+         stones stones]
+    (if (seq stones)
+      (let [[x y] (first stones)
+            game (assoc-in game [y x] nil)]
+        (recur game (rest stones)))
+      game)))
+
 (defn- transform-game
   [game [x0 y0] [x y]]
   (let [new-pos ((game y) x)
         old-pos ((game y0) x0)
         player-from (->> old-pos :player first)
+        opponent (if (= player-from :player1) :player2 :player1)
+        opponent-stones-in-way (stones-on-the-way game [x0 y0] [x y] opponent)
+        game (remove-stones-on-path game opponent-stones-in-way)
         player-to (->> new-pos :player first)]
     (if (not= player-from player-to)
       (let [old-row (assoc (game y0) x0 nil)
