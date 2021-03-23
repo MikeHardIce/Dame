@@ -44,18 +44,31 @@
         tiles (map #(:coord %) tiles)]
     (vec tiles))))
 
+(defn determine-possible-move
+ "Computes the next possible coord using x-fun and y-fun.
+  in case the coord is occupied with the oposite player,
+  then apply both functions again. This means move along
+  the diagonal once more if the tile is occupied." 
+  [game x y x-fun y-fun player]
+  (let [[x0 y0] [(x-fun x) (y-fun y)]
+        player-on-stone (first (seq (:player ((game y0) x0))))]
+    (if (and player-on-stone (not= player player-on-stone))
+      [(x-fun x0) (y-fun y0)]
+      [x0 y0])))
+
 (defn possible-moves-normal
   "Hands back a vector of vectors containing the coordinates of the potential
    next moves of the stone at x y"
   [game x y player]
   (let [direction (if (= player :player1) -1 1)
-        pos-moves [[(inc x) (+ y direction)] [(dec x) (+ y direction)]]
+        determine-next #(determine-possible-move game x y % (partial + direction) player)
+        pos-moves [(determine-next inc) (determine-next dec)]
         moves (filter #(within-board? game %) pos-moves)]
     (filter #(let [x0 (first %)
                    y0 (second %)
                    stone (seq (:player ((game y0) x0)))]
-               (not= (first stone) player)) 
-            moves)))
+               (not stone))
+               moves)))
 
 (defn possible-moves-dame
   "Hands back a vector of vectors containing the coordinates of the potential

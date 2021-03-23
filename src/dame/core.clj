@@ -55,12 +55,8 @@
         tile ((@game y) x)]
     (println (str "tile: (" x "," y ")"))
     (if (and (seq tile) (:selected tile) (= (:selection-color tile) :yellow-green))
-      (let [y-range (cond 
-                      (and (> y 0) (< y 7)) [(dec y) (inc y)]
-                      (= y 0) [1]
-                      :else [6])
-            near-stones (for [xi (range 8)
-                              yi y-range]
+      (let [near-stones (for [xi (range 8)
+                              yi (range 8)]
                           [xi yi (:selection-color ((@game yi) xi))])
             [[x0 y0]] (filter (fn [item]
                                 (some #(= % :green) item)) 
