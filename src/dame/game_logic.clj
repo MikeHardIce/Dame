@@ -16,7 +16,7 @@
   [game [x y]]
   (let [y-max (count game)]
     (cond
-      (= y y-max) :player1
+      (= y (dec y-max)) :player1
       (= y 0) :player2
       :else nil)))
 
@@ -105,12 +105,20 @@
         game (remove-stones-on-path game opponent-stones-in-way)
         player-to (->> new-pos :player first)]
     (if (not= player-from player-to)
-      (let [old-row (assoc (game y0) x0 nil)
-            new-row (assoc (game y) x old-pos)
-            new-game (assoc game y0 old-row)
-            new-game (assoc new-game y new-row)]
+      (let [new-game (assoc-in game [y0 x0] nil)
+            new-game (assoc-in new-game [y x] old-pos)]
         new-game)
       game)))
+
+(defn- handle-stone-upgrade
+  [game [x y :as tile]]
+  (if (is-on-border? game tile)
+    (let [stones (:player (nth (game y) x))
+          player (first stones)]
+      (if (and player (= (count stones) 1))
+        (assoc-in game [y x :player] [player player])
+        game))
+    game))
 
 (defn next-game
   "Returns a new game with the transition [x0 y0] -> [x y] applied"
@@ -118,5 +126,5 @@
    (let [allowed-moves (possible-moves game x0 y0)
          within (filter #(= % to) allowed-moves)]
      (if (seq within)
-      (transform-game game [x0 y0] to)
+      (handle-stone-upgrade (transform-game game [x0 y0] to) to)
       game)))
