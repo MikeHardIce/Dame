@@ -56,13 +56,21 @@
       [(x-fun x0) (y-fun y0)]
       [x0 y0])))
 
-(defn possible-moves-normal
+(defn use-normal-moves
+  [x y next-f]
+  [(next-f x y inc) (next-f x y dec)])
+
+(defn use-dame-moves
+  [x y next-f]
+  [[x y]])
+
+(defn possible-moves-next
   "Hands back a vector of vectors containing the coordinates of the potential
    next moves of the stone at x y"
-  [game x y player]
+  [game x y player strategy-f]
   (let [direction (if (= player :player1) -1 1)
-        determine-next #(determine-possible-move game x y % (partial + direction) player)
-        pos-moves [(determine-next inc) (determine-next dec)]
+        determine-next #(determine-possible-move game %1 %2 %3 (partial + direction) player)
+        pos-moves (strategy-f x y determine-next)
         moves (filter #(within-board? game %) pos-moves)]
     (filter #(let [x0 (first %)
                    y0 (second %)
@@ -70,20 +78,14 @@
                (not stone))
                moves)))
 
-(defn possible-moves-dame
-  "Hands back a vector of vectors containing the coordinates of the potential
-   next moves of the dame (2 stones) at x y"
-  [game x y player]
-  [[x y]])
-
 (defn possible-moves
   "Returns a vector consisting of possible next moves for the given stone/dame at x y"
   [game x y]
   (when (within-board? game [x y])
     (when-let [stone (seq (:player ((game y) x)))]
       (if (< (count stone) 2)
-        (possible-moves-normal game x y (nth stone 0))
-        (possible-moves-dame game x y (nth stone 0))))))
+        (possible-moves-next game x y (nth stone 0) use-normal-moves)
+        (possible-moves-next game x y (nth stone 0) use-dame-moves)))))
 
 (defn remove-stones-on-path
   [game stones]

@@ -53,7 +53,7 @@
         y (second coord)
         moves (logic/possible-moves @game x y)
         tile ((@game y) x)]
-    (println (str "tile: (" x "," y ")"))
+    (println "tile: (" x "," y ")")
     (if (and (seq tile) (:selected tile) (= (:selection-color tile) :yellow-green))
       (let [near-stones (for [xi (range 8)
                               yi (range 8)]
@@ -61,7 +61,7 @@
             [[x0 y0]] (filter (fn [item]
                                 (some #(= % :green) item)) 
                               near-stones)]
-        (println (str " [" x0 " " y0 "] [" x " " y "] "))
+        (println " [" x0 " " y0 "] [" x " " y "] ")
         (swap! game logic/next-game [x0 y0] [x y])
         (swap! game unmark-all))
       (do
