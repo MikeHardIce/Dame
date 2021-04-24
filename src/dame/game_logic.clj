@@ -2,12 +2,24 @@
 
 (defn- within-board?
   "Checks if the given coordinate is within the board,
-   If so, returns true, otherwise nil" 
+   If so, returns true, otherwise nil"
   [game [x y]]
   (let [y-max (count game)
         x-max (count (game 0))]
     (and (< y y-max) (< x x-max)
          (>= y 0) (>= x 0))))
+
+(defn- within-distance?
+  [x0 y0 [x y] len]
+  (let [diff-x (Math/abs (- x0 x))
+        diff-y (Math/abs (- y0 y))]
+    (or (<= diff-x len) (<= diff-y len))))
+
+(defn- on-closure?
+  [x0 y0 [x y] len]
+  (let [diff-x (Math/abs (- x0 x))
+        diff-y (Math/abs (- y0 y))]
+    (or (= diff-x len) (= diff-y len))))
 
 (defn is-on-border?
   "Checks if the given coordinate is on one of the player's border
@@ -33,50 +45,64 @@
         tiles
         (recur (conj tiles {:player (:player ((game cur-y) cur-x)) :coord [cur-x cur-y]}) (+ cur-x direction-x) (+ cur-y direction-y))))))
 
-(defn stones-on-the-way 
+(defn stones-on-the-way
   "Returns the stones belonging to the given player
    that lay in between from and to.
    Default uses the player 'from' belongs to"
   ([game [x0 y0 :as from] to] (stones-on-the-way game from to (first (:player ((game y0) x0)))))
   ([game from to player]
-  (let [tiles (filter #(and (seq (:player %))
-                                (= (first (:player %)) player)) (get-all-tiles-on-the-way game from to))
-        tiles (map #(:coord %) tiles)]
-    (vec tiles))))
+   (let [tiles (filter #(and (seq (:player %))
+                             (= (first (:player %)) player)) (get-all-tiles-on-the-way game from to))
+         tiles (map #(:coord %) tiles)]
+     (vec tiles))))
 
-(defn determine-possible-move
- "Computes the next possible coord using x-fun and y-fun.
-  in case the coord is occupied with the oposite player,
-  then apply both functions again. This means move along
-  the diagonal once more if the tile is occupied." 
-  [game x y x-fun y-fun player]
-  (let [[x0 y0] [(x-fun x) (y-fun y)]
-        player-on-stone (first (seq (:player (nth (nth game y0 nil) x0 nil))))]
-    (if (and player-on-stone (not= player player-on-stone))
-      [(x-fun x0) (y-fun y0)]
-      [x0 y0])))
+;;f (x) = -x + (y0 + x0)
+;;f (x) = x + (y0 - x0)
 
-(defn use-normal-moves
-  [x y next-f]
-  [(next-f x y inc) (next-f x y dec)])
+(defn iterate-closure
+  [x0 y0 points]
+  (loop [pnts points
+         next-points []]
+    (if (seq pnts)
+      (let [point (first pnts)
+            x (nth point 0)
+            y (nth point 1)
+            direction-x (if (pos? (- x0 x)) -1 1)
+            direction-y (if (pos? (- y0 y)) -1 1)
+            new [(+ x direction-x)
+                 (+ y direction-y)]]
+        (recur (rest pnts) (conj next-points new)))
+      next-points)))
 
-(defn use-dame-moves
-  [x y next-f]
-  [[x y]])
+(defn all-diagonal-moves
+  [x y board-length]
+  (let [path (for [xn (range 0 board-length)]
+               [[xn (+ xn (- y x))] [xn (- (+ y x) xn)]])
+        path (mapcat identity path)
+        ;; filter out all y smaller than 0
+        path (filter #(>= (nth % 1 -1) 0) path)]
+    path))
 
 (defn possible-moves-next
   "Hands back a vector of vectors containing the coordinates of the potential
    next moves of the stone at x y"
-  [game x y player strategy-f]
-  (let [direction (if (= player :player1) -1 1)
-        determine-next #(determine-possible-move game %1 %2 %3 (partial + direction) player)
-        pos-moves (strategy-f x y determine-next)
-        moves (filter #(within-board? game %) pos-moves)]
+  [game x y player distance directions]
+  (let [diag-moves (all-diagonal-moves x y (count game))
+        pos-moves (filter #(within-distance? x y % distance) diag-moves)
+        on-border (filter #(on-closure? x y % distance) pos-moves)
+        opponent-stones-on-border (filter #(let [x0 (first %)
+                                                 y0 (second %)
+                                                 pl (:player ((game y0) x0))]
+                                             (and (seq pl) (= player (first pl)))) on-border)
+        it-next (iterate-closure x y opponent-stones-on-border)
+        pos-moves (concat pos-moves it-next)
+        pos-moves (filter #(within-board? game %) pos-moves)
+        pos-moves (filter #(seq (stones-on-the-way game [x y] %)) pos-moves)]
     (filter #(let [x0 (first %)
                    y0 (second %)
                    stone (seq (:player ((game y0) x0)))]
                (not stone))
-               moves)))
+            pos-moves)))
 
 (defn possible-moves
   "Returns a vector consisting of possible next moves for the given stone/dame at x y"
@@ -84,8 +110,8 @@
   (when (within-board? game [x y])
     (when-let [stone (seq (:player ((game y) x)))]
       (if (< (count stone) 2)
-        (possible-moves-next game x y (nth stone 0) use-normal-moves)
-        (possible-moves-next game x y (nth stone 0) use-dame-moves)))))
+        (possible-moves-next game x y (nth stone 0) 1 (if (= (nth stone 0) :player1) [-1] [1]))
+        (possible-moves-next game x y (nth stone 0) (count game) [-1 1])))))
 
 (defn remove-stones-on-path
   [game stones]
@@ -125,8 +151,8 @@
 (defn next-game
   "Returns a new game with the transition [x0 y0] -> [x y] applied"
   [game [x0 y0] to]
-   (let [allowed-moves (possible-moves game x0 y0)
-         within (filter #(= % to) allowed-moves)]
-     (if (seq within)
+  (let [allowed-moves (possible-moves game x0 y0)
+        within (filter #(= % to) allowed-moves)]
+    (if (seq within)
       (handle-stone-upgrade (transform-game game [x0 y0] to) to)
       game)))

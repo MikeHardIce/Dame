@@ -5,7 +5,7 @@
 
 (def game (atom [[nil {:player [:player2 :player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
            [{:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil]
-           [nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
+           [nil {:player [:player2]} nil {:player [:player2 :player2]} nil {:player [:player2]} nil {:player [:player2]}]
            [nil nil nil nil nil nil nil nil]
            [nil nil nil nil nil nil nil nil]
            [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]
