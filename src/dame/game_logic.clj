@@ -41,7 +41,7 @@
     (loop [tiles []
            cur-x (+ x0 direction-x)
            cur-y (+ y0 direction-y)]
-      (if (= [cur-x cur-y] to)
+      (if (or (= [cur-x cur-y] to) (< cur-x 0) (< cur-y 0))
         tiles
         (recur (conj tiles {:player (:player ((game cur-y) cur-x)) :coord [cur-x cur-y]}) (+ cur-x direction-x) (+ cur-y direction-y))))))
 
@@ -97,7 +97,7 @@
         it-next (iterate-closure x y opponent-stones-on-border)
         pos-moves (concat pos-moves it-next)
         pos-moves (filter #(within-board? game %) pos-moves)
-        pos-moves (filter #(seq (stones-on-the-way game [x y] %)) pos-moves)]
+        pos-moves (filter #(not (seq (stones-on-the-way game [x y] %))) pos-moves)]
     (filter #(let [x0 (first %)
                    y0 (second %)
                    stone (seq (:player ((game y0) x0)))]
