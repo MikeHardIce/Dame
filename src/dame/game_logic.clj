@@ -87,17 +87,24 @@
   "Hands back a vector of vectors containing the coordinates of the potential
    next moves of the stone at x y"
   [game x y player distance directions]
+  (println x " " y " D: " distance)
   (let [diag-moves (all-diagonal-moves x y (count game))
         pos-moves (filter #(within-distance? x y % distance) diag-moves)
         on-border (filter #(on-closure? x y % distance) pos-moves)
+        on-border (filter #(within-board? game %) on-border)
         opponent-stones-on-border (filter #(let [x0 (first %)
                                                  y0 (second %)
-                                                 pl (:player ((game y0) x0))]
-                                             (and (seq pl) (= player (first pl)))) on-border)
+                                                 pl (:player (nth (nth game y0) x0))]
+                                             (and (seq pl) (not= player (first pl)))) on-border)
+        
         it-next (iterate-closure x y opponent-stones-on-border)
         pos-moves (concat pos-moves it-next)
         pos-moves (filter #(within-board? game %) pos-moves)
-        pos-moves (filter #(not (seq (stones-on-the-way game [x y] %))) pos-moves)]
+        pos-moves (filter #(not (seq (stones-on-the-way game [x y] %))) pos-moves)
+        pos-moves (filter (fn [elem] 
+                            (let [diff-y (- (second elem) y)
+                                  dirs (map #(* diff-y %) directions)]
+                              (some #(>= % 0) dirs))) pos-moves)]
     (filter #(let [x0 (first %)
                    y0 (second %)
                    stone (seq (:player ((game y0) x0)))]
