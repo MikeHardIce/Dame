@@ -1,5 +1,6 @@
 (ns dame.game-board
-  (:require [clojure2d.core :as c2d]))
+  (:require [clojure2d.core :as c2d]
+            [clojure.string :as s]))
 
 (defrecord Board [canvas window])
 
@@ -77,6 +78,17 @@
           (draw-stone board x y player)
           (when (> (count stones) 1)
             (draw-dame-sign board x y player)))))))
+
+(defn show-player-label
+  [^Board board player]
+  (let [color (name (first (player @player-color)))
+        color (concat (list (s/upper-case (first color))) (rest color))
+        color (apply str color)]
+    (println color)
+  (c2d/with-canvas-> (:canvas board)
+    (c2d/set-color :red)
+    (c2d/set-font-attributes 12)
+    (c2d/text "color" 10 50))))
 
 (defn select-stone
   [^Board board x y]

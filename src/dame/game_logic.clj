@@ -15,12 +15,6 @@
         diff-y (Math/abs (- y0 y))]
     (or (<= diff-x len) (<= diff-y len))))
 
-(defn- on-closure?
-  [x0 y0 [x y] len]
-  (let [diff-x (Math/abs (- x0 x))
-        diff-y (Math/abs (- y0 y))]
-    (or (= diff-x len) (= diff-y len))))
-
 (defn is-on-border?
   "Checks if the given coordinate is on one of the player's border
    If so, returns the key of the player the border/side belongs to,

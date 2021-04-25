@@ -12,6 +12,15 @@
            [nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]}]
            [{:player [:player1 :player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]]))
 
+(def current-player (atom '(:player1 :player2)))
+
+(defn count-stones
+  [game player]
+  (let [game (mapcat identity game)
+        stones (filter #(seq (:player %)) game)
+        stones (filter #(= (first (:player %)) player) stones)]
+    (count stones)))
+
 (defn unmark-all 
   [game]
   (let [new-game (for [y (range (count game))
@@ -45,26 +54,29 @@
   ""
   []
   (let [board (board/create-board)]
-    (board/draw-game board @game)))
+    (board/draw-game board @game)
+    (board/show-player-label board (first @current-player))))
 
 (defmethod board/game :tile-clicked
   [_ current-board coord]
   (let [x (first coord)
         y (second coord)
         moves (logic/possible-moves @game x y)
-        tile ((@game y) x)]
-    (println "tile: (" x "," y ")")
+        tile ((@game y) x)
+        player (first (:player tile))
+        moves (if (= player (first @current-player)) moves [])]
+    (board/show-player-label current-board (first @current-player))
     (if (and (seq tile) (:selected tile) (= (:selection-color tile) :yellow-green))
       (let [near-stones (for [xi (range 8)
                               yi (range 8)]
                           [xi yi (:selection-color ((@game yi) xi))])
             [[x0 y0]] (filter (fn [item]
-                                (some #(= % :green) item)) 
+                                (some #(= % :green) item))
                               near-stones)]
         (println " [" x0 " " y0 "] [" x " " y "] ")
         (swap! game logic/next-game [x0 y0] [x y])
         (swap! game unmark-all))
-      (do
+      (do 
         (swap! game unmark-all)
         (swap! game mark-moves moves)
         (swap! game mark-stone x y)))
