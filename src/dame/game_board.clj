@@ -81,14 +81,13 @@
 
 (defn show-player-label
   [^Board board player]
-  (let [color (name (first (player @player-color)))
+  (let [color (name (first (player player-color)))
         color (concat (list (s/upper-case (first color))) (rest color))
         color (apply str color)]
-    (println color)
   (c2d/with-canvas-> (:canvas board)
     (c2d/set-color :red)
-    (c2d/set-font-attributes 12)
-    (c2d/text "color" 10 50))))
+    (c2d/set-font-attributes 24 :bold)
+    (c2d/text color 10 25))))
 
 (defn select-stone
   [^Board board x y]
