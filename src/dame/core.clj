@@ -65,7 +65,6 @@
         tile ((@game y) x)
         player (first (:player tile))
         moves (if (= player (first @current-player)) moves [])]
-    (board/show-player-label current-board (first @current-player))
     (if (and (seq tile) (:selected tile) (= (:selection-color tile) :yellow-green))
       (let [near-stones (for [xi (range 8)
                               yi (range 8)]
@@ -80,4 +79,5 @@
         (swap! game unmark-all)
         (swap! game mark-moves moves)
         (swap! game mark-stone x y)))
-    (board/draw-game current-board @game)))
+    (board/draw-game current-board @game)
+    (board/show-player-label current-board (first @current-player))))
