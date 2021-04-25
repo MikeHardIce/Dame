@@ -59,7 +59,7 @@
 ;;f (x) = -x + (y0 + x0)
 ;;f (x) = x + (y0 - x0)
 
-(defn iterate-closure
+(defn increase-circle
   [x0 y0 points]
   (loop [pnts points
          next-points []]
@@ -90,21 +90,29 @@
   (println x " " y " D: " distance)
   (let [diag-moves (all-diagonal-moves x y (count game))
         pos-moves (filter #(within-distance? x y % distance) diag-moves)
-        on-border (filter #(on-closure? x y % distance) pos-moves)
-        on-border (filter #(within-board? game %) on-border)
-        opponent-stones-on-border (filter #(let [x0 (first %)
-                                                 y0 (second %)
-                                                 pl (:player (nth (nth game y0) x0))]
-                                             (and (seq pl) (not= player (first pl)))) on-border)
-        
-        it-next (iterate-closure x y opponent-stones-on-border)
-        pos-moves (concat pos-moves it-next)
         pos-moves (filter #(within-board? game %) pos-moves)
+        ;; retrieve all opponent stones on the path
+        opponent-stones (filter #(let [x0 (first %)
+                                       y0 (second %)
+                                       pl (:player (nth (nth game y0) x0))]
+                                   (and (seq pl) (not= player (first pl)))) pos-moves)
+        opponent (if (= player :player1) :player2 :player1)
+        ;; get the closest opponent stones (the ones where there are no other opponent stones on the way)
+        opponent-stones (filter #(not (seq (stones-on-the-way game [x y] % opponent))) opponent-stones)
+        ;; remove all tiles that come after opponent stones
+        pos-moves (filter #(not (seq (stones-on-the-way game [x y] % opponent))) pos-moves)
+        ;; get the tiles behind the opponent stones
+        outer-circle (increase-circle x y opponent-stones)
+        pos-moves (concat pos-moves outer-circle)
+        pos-moves (filter #(within-board? game %) pos-moves)
+        ;; remove all tiles that come after own stones 
         pos-moves (filter #(not (seq (stones-on-the-way game [x y] %))) pos-moves)
+        ;; remove all tiles on the wrong direction (only dame has pos y and neg y direction at the same time)
         pos-moves (filter (fn [elem] 
                             (let [diff-y (- (second elem) y)
                                   dirs (map #(* diff-y %) directions)]
                               (some #(>= % 0) dirs))) pos-moves)]
+    ;; remove all tiles that contain a stone
     (filter #(let [x0 (first %)
                    y0 (second %)
                    stone (seq (:player ((game y0) x0)))]
