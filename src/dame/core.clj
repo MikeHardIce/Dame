@@ -83,7 +83,8 @@
         (println " [" x0 " " y0 "] [" x " " y "] ")
         (swap! game logic/next-game [x0 y0] [x y])
         (swap! game unmark-all)
-        (let [potential-restricted-moves (filter #(seq (logic/stones-on-the-way @game [x y] % (second @current-player))) moves)]
+        (let [potential-restricted-moves (filter #(seq (logic/stones-on-the-way @game [x y] % (second @current-player))) 
+                                                 (logic/possible-moves @game x y))]
           (if (and (< (count-stones @game (second @current-player)) cnt-opponent-stones-before)
                    (seq potential-restricted-moves))
             (do ;; an opponent stone was removed and the player can remove another stone
@@ -92,12 +93,12 @@
               (swap! game mark-stone x y))
             (do ;; if nothing happened, then hand the turn over to the next player
               (swap! current-player reverse)
-              (reset! restrict-moves []))))))
+              (reset! restrict-moves [])))))
       (do ;; the player selected a tile that wasn't marked as :yellow-green 
         ;; (outside of :green -> :yellow-green move)
         (swap! game unmark-all)
         (swap! game mark-moves moves)
-        (swap! game mark-stone x y))))
+        (swap! game mark-stone x y)))))
     ;; redraw the game now with the potentially new state of the game
     (board/draw-game current-board @game)
     (board/show-player-label current-board (first @current-player)))

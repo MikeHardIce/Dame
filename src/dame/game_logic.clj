@@ -107,11 +107,11 @@
                                   dirs (map #(* diff-y %) directions)]
                               (some #(>= % 0) dirs))) pos-moves)]
     ;; remove all tiles that contain a stone
-    (filter #(let [x0 (first %)
-                   y0 (second %)
-                   stone (seq (:player ((game y0) x0)))]
-               (not stone))
-            pos-moves)))
+    (vec (filter #(let [x0 (first %)
+                        y0 (second %)
+                        stone (seq (:player ((game y0) x0)))]
+                    (not stone))
+                 pos-moves))))
 
 (defn possible-moves
   "Returns a vector consisting of possible next moves for the given stone/dame at x y"
