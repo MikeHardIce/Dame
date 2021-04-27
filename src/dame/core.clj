@@ -101,4 +101,6 @@
         (swap! game mark-stone x y)))))
     ;; redraw the game now with the potentially new state of the game
     (board/draw-game current-board @game)
-    (board/show-player-label current-board (first @current-player)))
+    (board/show-player-label current-board (first @current-player))
+    (when-let [winner (logic/get-winner @game)]
+      (board/show-winner-banner current-board winner)))

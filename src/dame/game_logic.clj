@@ -132,7 +132,16 @@
         (recur game (rest stones)))
       game)))
 
+(defn get-winner 
+  "Determines the winner of the game.
+   nil -> no winner
+   :player1 -> player 1 won
+   :player 2 -> player 2 won"
+  [game]
+  nil)
+
 (defn- transform-game
+  "Executes the move from x0 y0 to x y"
   [game [x0 y0] [x y]]
   (let [new-pos ((game y) x)
         old-pos ((game y0) x0)
@@ -148,6 +157,9 @@
       game)))
 
 (defn- handle-stone-upgrade
+  "Upgrade the players stone, if the stone
+   isn't already upgraded and if the stone is on
+   the opponents border"
   [game [x y :as tile]]
   (if (is-on-border? game tile)
     (let [stones (:player (nth (game y) x))

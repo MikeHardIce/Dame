@@ -89,6 +89,17 @@
     (c2d/set-font-attributes 24 :bold)
     (c2d/text color 10 25))))
 
+(defn show-winner-banner
+  ([^Board board player]
+   (show-winner-banner board player 155 :white)
+   (show-winner-banner board player 150 :red))
+  ([^Board board player size color]
+  (c2d/with-canvas-> (:canvas board)
+    (c2d/set-color color)
+    (c2d/set-font-attributes size :bold-italic)
+    (c2d/text (s/upper-case (name player)) tile-size (/ board-size 2))
+    (c2d/text "WON !!!" (* 3 tile-size) (/ board-size 1.5)))))
+
 (defn select-stone
   [^Board board x y]
   (draw-square board x y :green false))
