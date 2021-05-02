@@ -157,8 +157,8 @@
                             (some #(seq (possible-moves game (first %) (second %))) (filter #(= (:player %) player) stones-with-coord)))]
               (cond 
                 (and (seq (has-moves :player1)) (seq (has-moves :player2))) nil
-                (not (seq (has-moves :player1))) :player2
-                (not (seq (has-moves :player2))) :player1)))))
+                (seq (has-moves :player1)) :player2
+                (seq (has-moves :player2)) :player1)))))
 
 (defn- transform-game
   "Executes the move from x0 y0 to x y"
