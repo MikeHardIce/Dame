@@ -15,6 +15,13 @@
         diff-y (Math/abs (- y0 y))]
     (or (<= diff-x len) (<= diff-y len))))
 
+(defn get-stones
+  [game player]
+  (let [game (mapcat identity game)
+        stones (filter #(seq (:player %)) game)
+        stones (filter #(= (first (:player %)) player) stones)]
+    stones))
+
 (defn is-on-border?
   "Checks if the given coordinate is on one of the player's border
    If so, returns the key of the player the border/side belongs to,
@@ -138,7 +145,20 @@
    :player1 -> player 1 won
    :player 2 -> player 2 won"
   [game]
-  nil)
+  (let [player1-stones (get-stones game :player1)
+        player2-stones (get-stones game :player2)
+        max-tile (count game)]
+    (cond 
+      (not (seq player1-stones)) :player2
+      (not (seq player2-stones)) :player1
+      :else (let [stones-with-coord (for [x (range max-tile) y (range max-tile)] [x y (first (:player ((game y) x)))])
+                  stones-with-coord (filter #(nth % 2) stones-with-coord)
+                  has-moves (fn [player]
+                            (some #(seq (possible-moves game (first %) (second %))) (filter #(= (:player %) player) stones-with-coord)))]
+              (cond 
+                (and (seq (has-moves :player1)) (seq (has-moves :player2))) nil
+                (not (seq (has-moves :player1))) :player2
+                (not (seq (has-moves :player2))) :player1)))))
 
 (defn- transform-game
   "Executes the move from x0 y0 to x y"

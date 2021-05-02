@@ -2,7 +2,7 @@
   (:require [clojure2d.core :as c2d]
             [clojure.string :as s]))
 
-(defrecord Board [canvas window])
+(defrecord Board [canvas window locked])
 
 (def current-board (atom nil))
 
@@ -107,7 +107,7 @@
 (defn create-board
   []
   (let [canvas (c2d/canvas board-size board-size)
-        new-board (Board. canvas (c2d/show-window canvas "Dame"))]
+        new-board (Board. canvas (c2d/show-window canvas "Dame") nil)]
     ;; would be nice if clojure2d would have a function to get active windows
     (reset! current-board new-board)
     new-board))
@@ -121,7 +121,8 @@
 
 (defmethod c2d/mouse-event ["Dame" :mouse-pressed]
   [event state]
-  (let [window (:window @current-board)
-        x (c2d/mouse-x window)
-        y (c2d/mouse-y window)]
-    (game :tile-clicked @current-board (get-tile x y))))
+  (when (not (:locked @current-board))
+    (let [window (:window @current-board)
+          x (c2d/mouse-x window)
+          y (c2d/mouse-y window)]
+      (swap! current-board merge (game :tile-clicked @current-board (get-tile x y))))))

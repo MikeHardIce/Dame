@@ -16,13 +16,6 @@
 
 (def restrict-moves (atom []))
 
-(defn count-stones
-  [game player]
-  (let [game (mapcat identity game)
-        stones (filter #(seq (:player %)) game)
-        stones (filter #(= (first (:player %)) player) stones)]
-    (count stones)))
-
 (defn unmark-all 
   [game]
   (let [new-game (for [y (range (count game))
@@ -71,7 +64,7 @@
         tile ((@game y) x)
         player (first (:player tile))
         moves (if (= player (first @current-player)) moves [])
-        cnt-opponent-stones-before (count-stones @game (second @current-player))]
+        cnt-opponent-stones-before (count (logic/get-stones @game (second @current-player)))]
     (if (and (seq tile) (:selected tile) (= (:selection-color tile) :yellow-green))
       ;; find the stone that was selected previously (jump from :green -> :yellow-green)
       (let [near-stones (for [xi (range 8)
@@ -85,7 +78,7 @@
         (swap! game unmark-all)
         (let [potential-restricted-moves (filter #(seq (logic/stones-on-the-way @game [x y] % (second @current-player))) 
                                                  (logic/possible-moves @game x y))]
-          (if (and (< (count-stones @game (second @current-player)) cnt-opponent-stones-before)
+          (if (and (< (count (logic/get-stones @game (second @current-player))) cnt-opponent-stones-before)
                    (seq potential-restricted-moves))
             (do ;; an opponent stone was removed and the player can remove another stone
               (swap! restrict-moves concat potential-restricted-moves)
@@ -102,5 +95,7 @@
     ;; redraw the game now with the potentially new state of the game
     (board/draw-game current-board @game)
     (board/show-player-label current-board (first @current-player))
+    current-board
     (when-let [winner (logic/get-winner @game)]
-      (board/show-winner-banner current-board winner)))
+      (board/show-winner-banner current-board winner)
+      (assoc current-board :locked true)))
