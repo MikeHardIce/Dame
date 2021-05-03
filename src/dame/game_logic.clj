@@ -154,11 +154,13 @@
       :else (let [stones-with-coord (for [x (range max-tile) y (range max-tile)] [x y (first (:player ((game y) x)))])
                   stones-with-coord (filter #(nth % 2) stones-with-coord)
                   has-moves (fn [player]
-                            (some #(seq (possible-moves game (first %) (second %))) (filter #(= (:player %) player) stones-with-coord)))]
+                            (some #(seq (possible-moves game (first %) (second %))) (filter #(= (nth % 2) player) stones-with-coord)))]
+              (println "Player 1: " (has-moves :player1))
+              (println "Player 2: " (has-moves :player2))
               (cond 
                 (and (seq (has-moves :player1)) (seq (has-moves :player2))) nil
-                (seq (has-moves :player1)) :player2
-                (seq (has-moves :player2)) :player1)))))
+                (seq (has-moves :player2)) :player2
+                (seq (has-moves :player1)) :player1)))))
 
 (defn- transform-game
   "Executes the move from x0 y0 to x y"

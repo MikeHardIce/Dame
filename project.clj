@@ -3,4 +3,6 @@
   :url "http://example.com/FIXME"
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [clojure2d "1.4.3"]]
+  :main dame.core
+  :aot [dame.core]
   :repl-options {:init-ns dame.core})
