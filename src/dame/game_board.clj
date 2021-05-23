@@ -136,7 +136,7 @@
     (let [window (:window @(:current-board widget))
           x (c2d/mouse-x window)
           y (c2d/mouse-y window)]
-      (swap! @(:current-board widget) merge (game :tile-clicked @(:current-board widget) (get-tile x y)))))
+      (swap! (:current-board widget) merge (game :tile-clicked @(:current-board widget) (get-tile x y)))))
   widget)
 
 ;; (defmethod c2d/mouse-event ["Dame" :mouse-pressed]
