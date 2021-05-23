@@ -1,10 +1,9 @@
 (ns dame.game-board
   (:require [clojure2d.core :as c2d]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [strigui.widget :as wdg]))
 
 (defrecord Board [canvas window locked])
-
-(def current-board (atom nil))
 
 (defmulti game (fn [type ^Board board data] type))
 
@@ -19,6 +18,7 @@
 (defn draw-square
   ([^Board board x y color] (draw-square board x y color true))
   ([^Board board x y color fill]
+   (println "draw-square ")
    (c2d/with-canvas-> (:canvas board)
      (c2d/set-color color)
      (c2d/set-stroke 8)
@@ -104,14 +104,6 @@
   [^Board board x y]
   (draw-square board x y :green false))
 
-(defn create-board
-  []
-  (let [canvas (c2d/canvas board-size board-size)
-        new-board (Board. canvas (c2d/show-window canvas "Dame") nil)]
-    ;; would be nice if clojure2d would have a function to get active windows
-    (reset! current-board new-board)
-    new-board))
-
 (defn get-tile
   "Returns the tile that contains the given x and y coordinates"
   [x-coord y-coord]
@@ -119,10 +111,38 @@
         y (Math/floor (/ y-coord tile-size))]
     [(int x) (int y)]))
 
-(defmethod c2d/mouse-event ["Dame" :mouse-pressed]
-  [event state]
-  (when (not (:locked @current-board))
-    (let [window (:window @current-board)
+(defrecord Game-Board [name game current-board args]
+  wdg/Widget
+  (coord [this canvas] [0 0 board-size board-size])
+  (value [this] (:game this))
+  (args [this] (:args this))
+  (widget-name [this] (:name this))
+  (draw [this canvas]
+        (draw-game @(:current-board this) (:game this))
+        this)
+  (redraw [this canvas]
+          (draw-game @(:current-board this) (:game this))
+          this))
+
+(defn create-board
+  [canvas window game]
+  (let [current-board (atom (->Board canvas window nil))]
+    (->Game-Board "Dame" game current-board {:x 0 :y 0})))
+
+(defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
+  [_ canvas widget]
+  (println "click")
+  (when (not (:locked @(:current-board widget)))
+    (let [window (:window @(:current-board widget))
           x (c2d/mouse-x window)
           y (c2d/mouse-y window)]
-      (swap! current-board merge (game :tile-clicked @current-board (get-tile x y))))))
+      (swap! @(:current-board widget) merge (game :tile-clicked @(:current-board widget) (get-tile x y)))))
+  widget)
+
+;; (defmethod c2d/mouse-event ["Dame" :mouse-pressed]
+;;   [event state]
+;;   (when (not (:locked @current-board))
+;;     (let [window (:window @current-board)
+;;           x (c2d/mouse-x window)
+;;           y (c2d/mouse-y window)]
+;;       (swap! current-board merge (game :tile-clicked @current-board (get-tile x y))))))

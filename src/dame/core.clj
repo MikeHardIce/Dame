@@ -1,6 +1,7 @@
 (ns dame.core
   (:require [dame.game-board :as board]
-            [dame.game-logic :as logic])
+            [dame.game-logic :as logic]
+            [strigui.core :as gui])
   (:gen-class))
 
 (def game (atom [[nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
@@ -57,9 +58,10 @@
 (defn -main
   ""
   []
-  (let [board (board/create-board)]
-    (board/draw-game board @game)
-    (board/show-player-label board (first @current-player))))
+  (let [window (gui/window! 1000 1000 "Dame")
+        game-board (board/create-board (:canvas window) (:window window) @game)]
+    (gui/create game-board)
+    (board/show-player-label @(:current-board game-board) (first @current-player))))
 
 (defmethod board/game :tile-clicked
   [_ current-board coord]
