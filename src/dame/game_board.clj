@@ -81,13 +81,14 @@
 
 (defn show-player-label
   [^Board board player]
-  (let [color (name (first (player player-color)))
-        color (concat (list (s/upper-case (first color))) (rest color))
-        color (apply str color)]
-  (c2d/with-canvas-> (:canvas board)
-    (c2d/set-color :red)
-    (c2d/set-font-attributes 24 :bold)
-    (c2d/text color 10 25))))
+  (when player
+    (let [color (name (first (player player-color)))
+          color (concat (list (s/upper-case (first color))) (rest color))
+          color (apply str color)]
+      (c2d/with-canvas-> (:canvas board)
+        (c2d/set-color :red)
+        (c2d/set-font-attributes 24 :bold)
+        (c2d/text color 10 25)))))
 
 (defn show-winner-banner
   ([^Board board player]
@@ -111,7 +112,7 @@
         y (Math/floor (/ y-coord tile-size))]
     [(int x) (int y)]))
 
-(defrecord Game-Board [name game current-board args]
+(defrecord Game-Board [name game current-board args info-text]
   wdg/Widget
   (coord [this canvas] [0 0 board-size board-size])
   (value [this] (:game this))
@@ -119,6 +120,7 @@
   (widget-name [this] (:name this))
   (draw [this canvas]
         (draw-game @(:current-board this) (:game this))
+        (show-player-label @(:current-board this) (:info-text this))
         this)
   (redraw [this canvas]
           (draw-game @(:current-board this) (:game this))
@@ -127,7 +129,7 @@
 (defn create-board
   [canvas window game]
   (let [current-board (atom (->Board canvas window nil))]
-    (->Game-Board "Dame" game current-board {:x 0 :y 0})))
+    (->Game-Board "Dame" game current-board {:x 0 :y 0} nil)))
 
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
   [_ canvas widget]

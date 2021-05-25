@@ -55,13 +55,29 @@
           (recur (rest potential-moves) (mark-stone game curr-x curr-y :yellow-green)))
       game)))
 
+(defn create-start-btn
+  []
+  (gui/button "btn-start" "Start" {:x 400 :y 300 :min-width 250 :color [:white :black]})
+  (gui/update! "btn-start" [:events :mouse-clicked] (fn [_]
+                                                      (let [board (gui/find-by-name "Dame")]
+                                                        (swap! (:current-board board) assoc :locked nil)
+                                                        (gui/remove! "btn-start")
+                                                        (gui/remove! "btn-quit")
+                                                        (gui/update! "Dame" :info-text (first @current-player))))))
+
+(defn create-quit-btn
+  []
+  (gui/button "btn-quit" "Quit" {:x 400 :y 500 :min-width 250 :color [:white :black]}))
+
 (defn -main
   ""
   []
   (let [window (gui/window! 1000 1000 "Dame")
         game-board (board/create-board (:canvas window) (:window window) @game)]
+    (swap! (:current-board game-board) assoc :locked true)
     (gui/create game-board)
-    (board/show-player-label @(:current-board game-board) (first @current-player))))
+    (create-start-btn)
+    (create-quit-btn)))
 
 (defmethod board/game :tile-clicked
   [_ current-board coord]
