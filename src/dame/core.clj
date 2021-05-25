@@ -13,15 +13,6 @@
            [nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]}]
            [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]]))
 
-;; (def game (atom [[nil {:player [:player2 :player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
-;;                  [{:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil]
-;;                  [nil {:player [:player2]} nil {:player [:player2 :player2]} nil {:player [:player2]} nil {:player [:player2]}]
-;;                  [{:player [:player1]} nil nil nil nil nil {:player [:player1]} nil]
-;;                  [nil nil nil nil nil nil nil nil]
-;;                  [nil nil nil nil nil nil nil nil]
-;;                  [nil nil nil nil nil nil nil nil]
-;;                  [nil nil nil nil  nil nil nil nil]]))
-
 (def current-player (atom '(:player1 :player2)))
 
 (def restrict-moves (atom []))
