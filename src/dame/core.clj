@@ -4,14 +4,16 @@
             [strigui.core :as gui])
   (:gen-class))
 
-(def game (atom [[nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
-           [{:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil]
-           [nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
-           [nil nil nil nil nil nil nil nil]
-           [nil nil nil nil nil nil nil nil]
-           [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]
-           [nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]}]
-           [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]]))
+(defonce game-start [[nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
+                     [{:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil]
+                     [nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
+                     [nil nil nil nil nil nil nil nil]
+                     [nil nil nil nil nil nil nil nil]
+                     [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]
+                     [nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]}]
+                     [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]])
+
+(def game (atom game-start))
 
 (def current-player (atom '(:player1 :player2)))
 
@@ -51,6 +53,7 @@
   (gui/button "btn-start" "Start" {:x 400 :y 300 :min-width 250 :color [:white :black]})
   (gui/update! "btn-start" [:events :mouse-clicked] (fn [_]
                                                       (let [board (gui/find-by-name "Dame")]
+                                                        (reset! game game-start)
                                                         (swap! (:current-board board) assoc :locked nil)
                                                         (gui/remove! "btn-start")
                                                         (gui/remove! "btn-quit")
@@ -60,6 +63,11 @@
   []
   (gui/button "btn-quit" "Quit" {:x 400 :y 500 :min-width 250 :color [:white :black]}))
 
+(defn create-menu
+  []
+  (create-start-btn)
+  (create-quit-btn))
+
 (defn -main
   ""
   []
@@ -67,8 +75,7 @@
         game-board (board/create-board (:canvas window) (:window window) @game)]
     (swap! (:current-board game-board) assoc :locked true)
     (gui/create game-board)
-    (create-start-btn)
-    (create-quit-btn)))
+    (create-menu)))
 
 (defmethod board/game :tile-clicked
   [_ current-board coord]
@@ -116,4 +123,5 @@
     current-board
     (when-let [winner (logic/get-winner @game)]
       (board/show-winner-banner current-board winner)
-      (assoc current-board :locked true)))
+      (assoc current-board :locked true)
+      (create-menu)))
