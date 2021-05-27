@@ -61,7 +61,9 @@
 
 (defn create-quit-btn
   []
-  (gui/button "btn-quit" "Quit" {:x 400 :y 500 :min-width 250 :color [:white :black] :font-size 28}))
+  (gui/button "btn-quit" "Quit" {:x 400 :y 500 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/update! "btn-quit" [:events :mouse-clicked] (fn [_]
+                                                     (gui/close-window))))
 
 (defn create-menu
   []

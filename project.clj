@@ -3,7 +3,7 @@
   :url "http://example.com/FIXME"
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [clojure2d "1.4.3"]
-                 [strigui "0.0.1-alpha5"]]
+                 [strigui "0.0.1-alpha6"]]
   
   :main dame.core
   :aot [dame.core]
