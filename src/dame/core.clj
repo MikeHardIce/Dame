@@ -100,7 +100,6 @@
             [[x0 y0]] (filter (fn [item]
                                 (some #(= % :green) item))
                               near-stones)]
-        (println " [" x0 " " y0 "] [" x " " y "] ")
         (swap! game logic/next-game [x0 y0] [x y])
         (swap! game unmark-all)
         (let [potential-restricted-moves (filter #(seq (logic/stones-on-the-way @game [x y] % (second @current-player))) 

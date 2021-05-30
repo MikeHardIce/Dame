@@ -88,7 +88,6 @@
   "Hands back a vector of vectors containing the coordinates of the potential
    next moves of the stone at x y"
   [game x y player distance directions]
-  (println x " " y " D: " distance)
   (let [diag-moves (all-diagonal-moves x y (count game))
         pos-moves (filter #(within-distance? x y % distance) diag-moves)
         pos-moves (filter #(within-board? game %) pos-moves)
@@ -155,8 +154,6 @@
                   stones-with-coord (filter #(nth % 2) stones-with-coord)
                   has-moves (fn [player]
                             (some #(seq (possible-moves game (first %) (second %))) (filter #(= (nth % 2) player) stones-with-coord)))]
-              (println "Player 1: " (has-moves :player1))
-              (println "Player 2: " (has-moves :player2))
               (cond 
                 (and (seq (has-moves :player1)) (seq (has-moves :player2))) nil
                 (seq (has-moves :player2)) :player2

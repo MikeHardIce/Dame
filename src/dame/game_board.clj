@@ -18,7 +18,6 @@
 (defn draw-square
   ([^Board board x y color] (draw-square board x y color true))
   ([^Board board x y color fill]
-   (println "draw-square ")
    (c2d/with-canvas-> (:canvas board)
      (c2d/set-color color)
      (c2d/set-stroke 8)
@@ -133,18 +132,9 @@
 
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
   [_ canvas widget]
-  (println "click")
   (when (not (:locked @(:current-board widget)))
     (let [window (:window @(:current-board widget))
           x (c2d/mouse-x window)
           y (c2d/mouse-y window)]
       (swap! (:current-board widget) merge (game :tile-clicked @(:current-board widget) (get-tile x y)))))
   widget)
-
-;; (defmethod c2d/mouse-event ["Dame" :mouse-pressed]
-;;   [event state]
-;;   (when (not (:locked @current-board))
-;;     (let [window (:window @current-board)
-;;           x (c2d/mouse-x window)
-;;           y (c2d/mouse-y window)]
-;;       (swap! current-board merge (game :tile-clicked @current-board (get-tile x y))))))
