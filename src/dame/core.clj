@@ -50,7 +50,7 @@
 
 (defn create-start-btn
   []
-  (gui/button "btn-start" "Start" {:x 400 :y 300 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/button "btn-start" "Start" {:x 400 :y 300 :z 3 :min-width 250 :color [:white :black] :font-size 28})
   (gui/update! "btn-start" [:events :mouse-clicked] (fn [_]
                                                       (let [board (gui/find-by-name "Dame")]
                                                         (reset! game game-start)
@@ -61,7 +61,7 @@
 
 (defn create-quit-btn
   []
-  (gui/button "btn-quit" "Quit" {:x 400 :y 500 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/button "btn-quit" "Quit" {:x 400 :y 500 :z 3 :min-width 250 :color [:white :black] :font-size 28})
   (gui/update! "btn-quit" [:events :mouse-clicked] (fn [_]
                                                      (gui/close-window))))
 
@@ -125,4 +125,5 @@
     (when-let [winner (logic/get-winner @game)]
       (board/show-winner-banner current-board winner)
       (assoc current-board :locked true)
-      (create-menu)))
+      (create-menu)
+      current-board))

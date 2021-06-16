@@ -128,7 +128,7 @@
 (defn create-board
   [canvas window game]
   (let [current-board (atom (->Board canvas window nil))]
-    (->Game-Board "Dame" game current-board {:x 0 :y 0} nil)))
+    (->Game-Board "Dame" game current-board {:x 0 :y 0 :z 0} nil)))
 
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
   [_ canvas widget]
