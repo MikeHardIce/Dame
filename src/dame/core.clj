@@ -146,4 +146,6 @@
 
 (defmethod board/game :after-tile-clicked
   [_ current-board coord]
+  (when (not= (->> @current-player first second) :human)
+    (println "not human"))
 current-board)

@@ -133,7 +133,7 @@
 (defn click-board-at-tile
   ([widget x y] (click-board-at-tile widget x y :tile-clicked))
   ([widget x y event]
-   (swap! (:current-board widget) merge (game event @(:current-board widget) (get-tile x y)))))
+   (game event @(:current-board widget) (get-tile x y))))
 
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
   [_ _ widget]
@@ -141,6 +141,8 @@
     (let [window (:window @(:current-board widget))
           x (c2d/mouse-x window)
           y (c2d/mouse-y window)]
-      (click-board-at-tile widget x y)
-      (click-board-at-tile widget x y :after-tile-clicked)))
+      (swap! (:current-board widget) merge (click-board-at-tile widget x y))
+      (swap! (:current-board widget) assoc :locked true)
+      (swap! (:current-board widget) merge(click-board-at-tile widget x y :after-tile-clicked))
+      (swap! (:current-board widget) assoc :locked nil)))
   widget)
