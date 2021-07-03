@@ -141,6 +141,9 @@
     current-board
     (when-let [winner (logic/get-winner @game)]
       (board/show-winner-banner current-board winner)
-      (assoc current-board :locked true)
       (create-menu)
-      current-board))
+      (assoc current-board :locked true)))
+
+(defmethod board/game :after-tile-clicked
+  [_ current-board coord]
+current-board)

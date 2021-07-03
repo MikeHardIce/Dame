@@ -130,15 +130,17 @@
   (let [current-board (atom (->Board canvas window nil))]
     (->Game-Board "Dame" game current-board {:x 0 :y 0 :z 0} nil)))
 
-(defn click-board-at-tile 
-  [widget x y]
-  (swap! (:current-board widget) merge (game :tile-clicked @(:current-board widget) (get-tile x y))))
+(defn click-board-at-tile
+  ([widget x y] (click-board-at-tile widget x y :tile-clicked))
+  ([widget x y event]
+   (swap! (:current-board widget) merge (game event @(:current-board widget) (get-tile x y)))))
 
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
-  [_ canvas widget]
+  [_ _ widget]
   (when (not (:locked @(:current-board widget)))
     (let [window (:window @(:current-board widget))
           x (c2d/mouse-x window)
           y (c2d/mouse-y window)]
-      (click-board-at-tile widget x y)))
+      (click-board-at-tile widget x y)
+      (click-board-at-tile widget x y :after-tile-clicked)))
   widget)
