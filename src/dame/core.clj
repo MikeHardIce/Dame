@@ -15,7 +15,7 @@
 
 (def game (atom game-start))
 
-(def current-player (atom '(:player1 :player2)))
+(def current-player (atom '([:player1 :human] [:player2 :human])))
 
 (def restrict-moves (atom []))
 
@@ -48,16 +48,33 @@
           (recur (rest potential-moves) (mark-stone game curr-x curr-y :yellow-green)))
       game)))
 
+(defn start-game
+  [player1-setting player2-setting]
+  (let [board (gui/find-by-name "Dame")]
+    (reset! game game-start)
+    (swap! (:current-board board) assoc :locked nil)
+    (gui/remove! "btn-human")
+    (gui/remove! "btn-computer-easy")
+    (reset! current-player (list player1-setting player2-setting))
+    (gui/update! "Dame" :info-text (->> @current-player first first))))
+
+(defn create-play-mode-menu
+  []
+  (gui/button "btn-human" "vs Human" {:x 400 :y 300 :z 3 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/update! "btn-human" [:events :mouse-clicked] (fn [_]
+                                                      (start-game [:player1 :human] [:player2 :human])))
+  (gui/button "btn-computer-easy" "vs Computer (easy)" {:x 400 :y 450 :z 3 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/update! "btn-computer-easy" [:events :mouse-clicked] (fn [_]
+                                                      (start-game [:player1 :human] [:player2 :easy]))))
+
 (defn create-start-btn
   []
   (gui/button "btn-start" "Start" {:x 400 :y 300 :z 3 :min-width 250 :color [:white :black] :font-size 28})
   (gui/update! "btn-start" [:events :mouse-clicked] (fn [_]
-                                                      (let [board (gui/find-by-name "Dame")]
-                                                        (reset! game game-start)
-                                                        (swap! (:current-board board) assoc :locked nil)
-                                                        (gui/remove! "btn-start")
-                                                        (gui/remove! "btn-quit")
-                                                        (gui/update! "Dame" :info-text (first @current-player))))))
+                                                      (gui/remove! "btn-start")
+                                                      (gui/remove! "btn-quit")
+                                                      (gui/update! "Dame" :info-text nil)
+                                                      (create-play-mode-menu))))
 
 (defn create-quit-btn
   []
@@ -90,8 +107,8 @@
         moves (logic/possible-moves @game x y)
         tile ((@game y) x)
         player (first (:player tile))
-        moves (if (= player (first @current-player)) moves [])
-        cnt-opponent-stones-before (count (logic/get-stones @game (second @current-player)))]
+        moves (if (= player (->> @current-player first first)) moves [])
+        cnt-opponent-stones-before (count (logic/get-stones @game (->> @current-player second first)))]
     (if (and (seq tile) (:selected tile) (= (:selection-color tile) :yellow-green))
       ;; find the stone that was selected previously (jump from :green -> :yellow-green)
       (let [near-stones (for [xi (range 8)
@@ -102,9 +119,9 @@
                               near-stones)]
         (swap! game logic/next-game [x0 y0] [x y])
         (swap! game unmark-all)
-        (let [potential-restricted-moves (filter #(seq (logic/stones-on-the-way @game [x y] % (second @current-player))) 
+        (let [potential-restricted-moves (filter #(seq (logic/stones-on-the-way @game [x y] % (->> @current-player second first))) 
                                                  (logic/possible-moves @game x y))]
-          (if (and (< (count (logic/get-stones @game (second @current-player))) cnt-opponent-stones-before)
+          (if (and (< (count (logic/get-stones @game (->> @current-player second first))) cnt-opponent-stones-before)
                    (seq potential-restricted-moves))
             (do ;; an opponent stone was removed and the player can remove another stone
               (swap! restrict-moves concat potential-restricted-moves)
@@ -120,7 +137,7 @@
         (swap! game mark-stone x y)))))
     ;; redraw the game now with the potentially new state of the game
     (board/draw-game current-board @game)
-    (board/show-player-label current-board (first @current-player))
+    (board/show-player-label current-board (->> @current-player first first))
     current-board
     (when-let [winner (logic/get-winner @game)]
       (board/show-winner-banner current-board winner)
