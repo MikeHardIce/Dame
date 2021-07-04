@@ -147,5 +147,33 @@
 (defmethod board/game :after-tile-clicked
   [_ current-board coord]
   (when (not= (->> @current-player first second) :human)
-    (println "not human"))
+    (let [stones (for [x (range 8)
+                       y (range 8)]
+                   [x y (first (:player ((@game y) x)))])
+          bla (println stones)
+          stones (filter #(= (nth % 2 nil) (->> @current-player first first)) stones)
+          bla (println stones)
+          stones (map #(into {:stone %} {:moves (logic/possible-moves @game (first %) (second %))}) stones)
+          stones (filter #(seq (:moves %)) stones)
+          bla (println stones)
+          stones (map #(assoc % :opponent-stones-on-the-way (vec (for [move (:moves %)]
+                                                                   (into {:destination move}
+                                                                         {:opponent (logic/stones-on-the-way
+                                                                                     @game
+                                                                                     (:stone %)
+                                                                                     move (->> @current-player
+                                                                                               second
+                                                                                               first))})))) stones)
+          bla (println stones)
+          good-moves (filter #(seq (->> % :opponent-stones-on-the-way :opponent)) stones)
+          move (if (seq good-moves)
+                 (let [m (rand-nth good-moves)]
+                   (vector (:stone m) (->> m :opponent-stones-on-the-way rand-nth :destination)))
+                 (let [m (rand-nth stones)]
+                   (vector (:stone m) (->> m :moves rand-nth))))
+          current-board (merge current-board (board/click-board-at-tile current-board (first move)))
+          current-board (do
+                          ;;delay
+                          (merge current-board (board/click-board-at-tile current-board (second move))))]
+      current-board))
 current-board)
