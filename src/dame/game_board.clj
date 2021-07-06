@@ -140,9 +140,10 @@
   (when (not (:locked @(:current-board widget)))
     (let [window (:window @(:current-board widget))
           x (c2d/mouse-x window)
-          y (c2d/mouse-y window)]
-      (swap! (:current-board widget) merge (click-board-at-tile @(:current-board widget) (get-tile x y)))
+          y (c2d/mouse-y window)
+          locked (:locked (swap! (:current-board widget) merge (click-board-at-tile @(:current-board widget) (get-tile x y))))]
       (swap! (:current-board widget) assoc :locked true)
       (swap! (:current-board widget) merge(click-board-at-tile @(:current-board widget) (get-tile x y) :after-tile-clicked))
-      (swap! (:current-board widget) assoc :locked nil)))
+      (when (not locked)
+        (swap! (:current-board widget) assoc :locked nil))))
   widget)

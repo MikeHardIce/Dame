@@ -63,7 +63,7 @@
   (gui/button "btn-human" "vs Human" {:x 400 :y 300 :z 3 :min-width 250 :color [:white :black] :font-size 28})
   (gui/update! "btn-human" [:events :mouse-clicked] (fn [_]
                                                       (start-game [:player1 :human] [:player2 :human])))
-  (gui/button "btn-computer-easy" "vs Computer (easy)" {:x 400 :y 450 :z 3 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/button "btn-computer-easy" "vs Computer (easy)" {:x 300 :y 450 :z 3 :min-width 250 :color [:white :black] :font-size 28})
   (gui/update! "btn-computer-easy" [:events :mouse-clicked] (fn [_]
                                                       (start-game [:player1 :human] [:player2 :easy]))))
 
@@ -95,6 +95,44 @@
     (swap! (:current-board game-board) assoc :locked true)
     (gui/create game-board)
     (create-menu)))
+
+(defn computer-easy-move 
+  [current-board]
+  (let [computer-player (->> @current-player first first)
+        stones (for [x (range 8)
+                     y (range 8)]
+                 [x y (first (:player ((@game y) x)))])
+        stones (filter #(= (nth % 2 nil) (->> @current-player first first)) stones)
+        stones (map #(into {:stone %} {:moves (logic/possible-moves @game (first %) (second %))}) stones)
+        stones (filter #(seq (:moves %)) stones)
+        stones (map #(assoc % :opponent-stones-on-the-way (vec (for [move (:moves %)]
+                                                                 (into {:destination move}
+                                                                       {:opponent (logic/stones-on-the-way
+                                                                                   @game
+                                                                                   (:stone %)
+                                                                                   move (->> @current-player
+                                                                                             second
+                                                                                             first))})))) stones)
+        good-moves (filter #(seq (->> % :opponent-stones-on-the-way :opponent)) stones)
+        move (cond
+               (seq good-moves) (let [m (rand-nth good-moves)]
+                                  (vector (:stone m) (->> m :opponent-stones-on-the-way rand-nth :destination)))
+               (seq stones) (let [m (rand-nth stones)]
+                              (vector (:stone m) (->> m :moves rand-nth)))
+               :else [])]
+    (loop [moves (vector (first move) (second move))
+           board current-board]
+      (let [new-board (merge board (board/click-board-at-tile board (first moves)))
+            new-moves (rest moves)
+            new-moves (if (and (= (->> @current-player first first) computer-player)
+                               (not (seq new-moves)))
+                        @restrict-moves
+                        new-moves)]
+        (if (seq new-moves)
+          (do
+            (Thread/sleep 500)
+            (recur new-moves new-board))
+          new-board)))))
 
 (defmethod board/game :tile-clicked
   [_ current-board coord]
@@ -146,34 +184,7 @@
 
 (defmethod board/game :after-tile-clicked
   [_ current-board coord]
-  (when (not= (->> @current-player first second) :human)
-    (let [stones (for [x (range 8)
-                       y (range 8)]
-                   [x y (first (:player ((@game y) x)))])
-          bla (println stones)
-          stones (filter #(= (nth % 2 nil) (->> @current-player first first)) stones)
-          bla (println stones)
-          stones (map #(into {:stone %} {:moves (logic/possible-moves @game (first %) (second %))}) stones)
-          stones (filter #(seq (:moves %)) stones)
-          bla (println stones)
-          stones (map #(assoc % :opponent-stones-on-the-way (vec (for [move (:moves %)]
-                                                                   (into {:destination move}
-                                                                         {:opponent (logic/stones-on-the-way
-                                                                                     @game
-                                                                                     (:stone %)
-                                                                                     move (->> @current-player
-                                                                                               second
-                                                                                               first))})))) stones)
-          bla (println stones)
-          good-moves (filter #(seq (->> % :opponent-stones-on-the-way :opponent)) stones)
-          move (if (seq good-moves)
-                 (let [m (rand-nth good-moves)]
-                   (vector (:stone m) (->> m :opponent-stones-on-the-way rand-nth :destination)))
-                 (let [m (rand-nth stones)]
-                   (vector (:stone m) (->> m :moves rand-nth))))
-          current-board (merge current-board (board/click-board-at-tile current-board (first move)))
-          current-board (do
-                          ;;delay
-                          (merge current-board (board/click-board-at-tile current-board (second move))))]
-      current-board))
-current-board)
+  (if (and (not= (->> @current-player first second) :human)
+           (not (logic/get-winner @game)))
+    (computer-easy-move current-board)
+    current-board))
