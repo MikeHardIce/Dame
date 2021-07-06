@@ -1,6 +1,9 @@
 # Dame
 A Clojure implementation of Dame, a german checker game.
 
+## New
+Now playable vs Computer (easy)
+
 ![](resources/Dame.png)
 
 ## How to play

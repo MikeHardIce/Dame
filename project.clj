@@ -1,4 +1,4 @@
-(defproject dame "0.1.1"
+(defproject dame "0.1.2"
   :description "A Clojure implementation of the german checker game called Dame (Lady)"
   :url "https://github.com/MikeHardIce/Dame"
   :dependencies [[org.clojure/clojure "1.10.3"]
