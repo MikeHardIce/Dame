@@ -114,21 +114,16 @@
 (defrecord Game-Board [name game current-board args info-text]
   wdg/Widget
   (coord [this canvas] [0 0 board-size board-size])
-  (value [this] (:game this))
-  (args [this] (:args this))
-  (widget-name [this] (:name this))
+  (defaults [this] (assoc-in this [:args :skip-redrawing] {:on-unselect true :on-click true :on-hover true}))
   (draw [this canvas]
         (draw-game @(:current-board this) (:game this))
         (show-player-label @(:current-board this) (:info-text this))
-        this)
-  (redraw [this canvas]
-          (draw-game @(:current-board this) (:game this))
-          this))
+        this))
 
 (defn create-board
   [canvas window game]
   (let [current-board (atom (->Board canvas window nil))]
-    (->Game-Board "Dame" game current-board {:x 0 :y 0 :z 0} nil)))
+    (->Game-Board "Dame" game current-board {:x 0 :y 0 :z -5} nil)))
 
 (defn click-board-at-tile
   ([board tile] (click-board-at-tile board tile :tile-clicked))

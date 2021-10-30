@@ -3,7 +3,7 @@
   :url "https://github.com/MikeHardIce/Dame"
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [clojure2d "1.4.3"]
-                 [strigui "0.0.1-alpha8"]]
+                 [strigui "0.0.1-alpha19"]]
   :keep-non-project-classes true
   :main dame.core
   :aot [dame.core]

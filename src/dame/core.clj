@@ -53,32 +53,32 @@
   (let [board (gui/find-by-name "Dame")]
     (reset! game game-start)
     (swap! (:current-board board) assoc :locked nil)
-    (gui/remove! "btn-human")
-    (gui/remove! "btn-computer-easy")
     (reset! current-player (list player1-setting player2-setting))
-    (gui/update! "Dame" :info-text (->> @current-player first first))))
+    (gui/update! "Dame" :info-text (->> @current-player first first) true)
+    (gui/update! "Dame" :game @game)))
 
 (defn create-play-mode-menu
   []
-  (gui/button "btn-human" "vs Human" {:x 400 :y 300 :z 3 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/button! "btn-human" "vs Human" {:x 400 :y 300 :z 3 :width 250 :color [:white :black] :font-size 28 :group "play-menu"})
   (gui/update! "btn-human" [:events :mouse-clicked] (fn [_]
+                                                      (gui/remove-group! "play-menu")
                                                       (start-game [:player1 :human] [:player2 :human])))
-  (gui/button "btn-computer-easy" "vs Computer (easy)" {:x 300 :y 450 :z 3 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/button! "btn-computer-easy" "vs Computer (easy)" {:x 300 :y 450 :z 3 :width 250 :color [:white :black] :font-size 28 :group "play-menu"})
   (gui/update! "btn-computer-easy" [:events :mouse-clicked] (fn [_]
+                                                      (gui/remove-group! "play-menu")
                                                       (start-game [:player1 :human] [:player2 :easy]))))
 
 (defn create-start-btn
   []
-  (gui/button "btn-start" "Start" {:x 400 :y 300 :z 3 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/button! "btn-start" "Start" {:x 400 :y 300 :z 3 :width 250 :color [:white :black] :font-size 28 :group "menu"})
   (gui/update! "btn-start" [:events :mouse-clicked] (fn [_]
-                                                      (gui/remove! "btn-start")
-                                                      (gui/remove! "btn-quit")
-                                                      (gui/update! "Dame" :info-text nil)
+                                                      (gui/update! "Dame" :info-text nil true)
+                                                      (gui/remove-group! "menu")
                                                       (create-play-mode-menu))))
 
 (defn create-quit-btn
   []
-  (gui/button "btn-quit" "Quit" {:x 400 :y 500 :z 3 :min-width 250 :color [:white :black] :font-size 28})
+  (gui/button! "btn-quit" "Quit" {:x 400 :y 500 :z 3 :width 250 :color [:white :black] :font-size 28 :group "menu"})
   (gui/update! "btn-quit" [:events :mouse-clicked] (fn [_]
                                                      (gui/close-window))))
 
@@ -91,9 +91,9 @@
   ""
   []
   (let [window (gui/window! 1000 1000 "Dame")
-        game-board (board/create-board (:canvas window) (:window window) @game)]
+        game-board (board/create-board (-> window :context :canvas) (-> window :context :window) @game)]
     (swap! (:current-board game-board) assoc :locked true)
-    (gui/create game-board)
+    (gui/create! game-board)
     (create-menu)))
 
 (defn computer-easy-move 
@@ -174,6 +174,7 @@
         (swap! game mark-moves moves)
         (swap! game mark-stone x y)))))
     ;; redraw the game now with the potentially new state of the game
+    (gui/update! "Dame" :game @game true)
     (board/draw-game current-board @game)
     (board/show-player-label current-board (->> @current-player first first))
     current-board
