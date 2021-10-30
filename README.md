@@ -1,9 +1,9 @@
 # Dame
 A Clojure implementation of Dame, a german checker game.
 
-Requirement: OpenJdk 11 or higher
-(windows: https://docs.microsoft.com/en-gb/java/openjdk/download
-Linux: https://adoptopenjdk.net/releases.html chose Hotspot Jvm)
+requirement:
+Get the OpenJDK 17 from [Adoptium](https://adoptium.net/)
+(This is the former [AdoptOpenJDK](https://adoptopenjdk.net/))
 
 ## New
 Now playable vs Computer (easy)
