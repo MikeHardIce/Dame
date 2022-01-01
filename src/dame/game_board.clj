@@ -1,7 +1,8 @@
 (ns dame.game-board
-  (:require [clojure2d.core :as c2d]
+  (:require [capra.core :as c]
             [clojure.string :as s]
-            [strigui.widget :as wdg]))
+            [strigui.widget :as wdg])
+  (:import [java.awt Color]))
 
 (defrecord Board [canvas window locked])
 
@@ -12,18 +13,22 @@
 (def ^:private board-size 1000)
 (def ^:private tile-size 125)
 
-(def ^:private player-color {:player1 [:white :black]
-                             :player2 [:black :white]})
+(def ^:private player-color {:player1 [Color/white Color/black]
+                             :player2 [Color/black Color/white]})
 
 (defn draw-square
   ([^Board board x y color] (draw-square board x y color true))
   ([^Board board x y color fill]
-   (c2d/with-canvas-> (:canvas board)
-     (c2d/set-color color)
-     (c2d/set-stroke 8)
-     (c2d/rect (* x tile-size) (* y tile-size) tile-size tile-size (not fill))
-     (c2d/set-color :red)
-     (c2d/text (str "(" x "," y ")") (* x tile-size) (- (* (inc y) tile-size) 10)))))
+   (c/draw-> (:canvas board)
+             (c/rect (* x tile-size) (* y tile-size) color tile-size tile-size (not fill) 8)
+             (c/text (* x tile-size) (- (* (inc y) tile-size)) (str "(" x "," y ")") Color/red 10))
+  ;;  (c2d/with-canvas-> (:canvas board)
+  ;;    (c2d/set-color color)
+  ;;    (c2d/set-stroke 8)
+  ;;    (c2d/rect (* x tile-size) (* y tile-size) tile-size tile-size (not fill))
+  ;;    (c2d/set-color :red)
+  ;;    (c2d/text (str "(" x "," y ")") (* x tile-size) (- (* (inc y) tile-size) 10)))
+   ))
 
 (defn draw-stone
   [^Board board x y player]
@@ -34,31 +39,44 @@
         s2 (* tile-size 0.75)
         s3 (* tile-size 0.55)
         s4 (* tile-size 0.45)]
-    (c2d/with-canvas-> (:canvas board)
-      (c2d/set-color :white)
-      (c2d/ellipse x0 y0 s0 s0)
-      (c2d/set-color :black)
-      (c2d/ellipse x0 y0 s1 s1)
-      (c2d/set-color (->> player-color (player) (first)))
-      (c2d/ellipse x0 y0 s2 s2)
-      (c2d/set-color (->> player-color (player) (second)))
-      (c2d/ellipse x0 y0 s3 s3)
-      (c2d/set-color (->> player-color (player) (first)))
-      (c2d/ellipse x0 y0 s4 s4))))
+    (c/draw-> (:canvas board)
+              (c/ellipse x0 y0 s0 s0 Color/white false 5)
+              (c/ellipse x0 y0 s1 s1 Color/black false 5)
+              (c/ellipse x0 y0 s2 s2 (->> player-color (player) (first)) false 5)
+              (c/ellipse x0 y0 s3 s3 (->> player-color (player) (second)) false 5)
+              (c/ellipse x0 y0 s4 s4 (->> player-color (player) (first)) true))
+    ;; (c2d/with-canvas-> (:canvas board)
+    ;;   (c2d/set-color :white)
+    ;;   (c2d/ellipse x0 y0 s0 s0)
+    ;;   (c2d/set-color :black)
+    ;;   (c2d/ellipse x0 y0 s1 s1)
+    ;;   (c2d/set-color (->> player-color (player) (first)))
+    ;;   (c2d/ellipse x0 y0 s2 s2)
+    ;;   (c2d/set-color (->> player-color (player) (second)))
+    ;;   (c2d/ellipse x0 y0 s3 s3)
+    ;;   (c2d/set-color (->> player-color (player) (first)))
+    ;;   (c2d/ellipse x0 y0 s4 s4))
+    ))
 
 (defn draw-dame-sign
   "Draws an upsite down cross inside a D at the current tile"
   [^Board board x y player]
   (let [x0 (+ (* x tile-size) (* 0.5 tile-size))
-        y0 (+ (* y tile-size) (* 0.5 tile-size))]
-    (c2d/with-canvas-> (:canvas board)
-      (c2d/set-color (->> player-color (player) (second)))
-      (c2d/set-font-attributes 48)
-      (c2d/text "D" (inc x0) (+ y0 18) :center)
-      (c2d/set-stroke 3)
-      (c2d/line x0 (- y0 15) x0 (+ y0 15))
-      (c2d/line (- x0 10) (+ y0 5) (+ x0 10) (+ y0 5))
-      )))
+        y0 (+ (* y tile-size) (* 0.5 tile-size))
+        color (->> player-color (player) (second))]
+    (c/draw-> (:canvas board)
+              (c/text (inc x0) (+ y0 18) "D" color 48)
+              (c/line x0 (- y0 15) x0 (+ y0 15) color 3)
+              (c/line (- x0 10) (+ y0 5) (+ x0 10) (+ y0 5) color 3))
+    ;; (c2d/with-canvas-> (:canvas board)
+    ;;   (c2d/set-color (->> player-color (player) (second)))
+    ;;   (c2d/set-font-attributes 48)
+    ;;   (c2d/text "D" (inc x0) (+ y0 18) :center)
+    ;;   (c2d/set-stroke 3)
+    ;;   (c2d/line x0 (- y0 15) x0 (+ y0 15))
+    ;;   (c2d/line (- x0 10) (+ y0 5) (+ x0 10) (+ y0 5))
+    ;;   )
+    ))
 
 (defn draw-game
   "game is a 8 element vector with each element being a 8 element vector"
@@ -66,7 +84,7 @@
   (doseq [x (range 8)
           y (range 8)]
     (let [stone ((game y) x)
-          color [:white :black]
+          color [Color/white Color/black]
           color-indicator (mod (+ x y) 2)]
       (if (and (:selected stone) (:selection-color stone))
         (draw-square board x y (:selection-color stone) false)
@@ -84,25 +102,32 @@
     (let [color (name (first (player player-color)))
           color (concat (list (s/upper-case (first color))) (rest color))
           color (apply str color)]
-      (c2d/with-canvas-> (:canvas board)
-        (c2d/set-color :red)
-        (c2d/set-font-attributes 24 :bold)
-        (c2d/text color 10 25)))))
+      (c/draw-> (:canvas board)
+                (c/text 10 25 color 24 :bold))
+      ;; (c2d/with-canvas-> (:canvas board)
+      ;;   (c2d/set-color :red)
+      ;;   (c2d/set-font-attributes 24 :bold)
+      ;;   (c2d/text color 10 25))
+      )))
 
 (defn show-winner-banner
   ([^Board board player]
-   (show-winner-banner board player 155 :white)
-   (show-winner-banner board player 150 :red))
+   (show-winner-banner board player 155 Color/white)
+   (show-winner-banner board player 150 Color/red))
   ([^Board board player size color]
-  (c2d/with-canvas-> (:canvas board)
-    (c2d/set-color color)
-    (c2d/set-font-attributes size :bold-italic)
-    (c2d/text (s/upper-case (name player)) tile-size (/ board-size 2))
-    (c2d/text "WON !!!" (* 3 tile-size) (/ board-size 1.5)))))
+   (c/draw-> (:canvas board)
+             (c/text tile-size (/ board-size 2) (s/upper-case (name player)) color size :italic)
+             (c/text (* 3 tile-size) (/ board-size 1.5) "WON !!!" color size :italic))
+  ;; (c2d/with-canvas-> (:canvas board)
+  ;;   (c2d/set-color color)
+  ;;   (c2d/set-font-attributes size :bold-italic)
+  ;;   (c2d/text (s/upper-case (name player)) tile-size (/ board-size 2))
+  ;;   (c2d/text "WON !!!" (* 3 tile-size) (/ board-size 1.5)))
+   ))
 
 (defn select-stone
   [^Board board x y]
-  (draw-square board x y :green false))
+  (draw-square board x y Color/green false))
 
 (defn get-tile
   "Returns the tile that contains the given x and y coordinates"
