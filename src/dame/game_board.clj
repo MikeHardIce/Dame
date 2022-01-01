@@ -13,14 +13,14 @@
 (def ^:private board-size 1000)
 (def ^:private tile-size 125)
 
-(def ^:private player-color {:player1 [Color/white Color/black]
-                             :player2 [Color/black Color/white]})
+(def ^:private player-color {:player1 [Color/white Color/black "white"]
+                             :player2 [Color/black Color/white "black"]})
 
 (defn draw-square
   ([^Board board x y color] (draw-square board x y color true))
   ([^Board board x y color fill]
    (c/draw-> (:canvas board)
-             (c/rect (* x tile-size) (* y tile-size) color tile-size tile-size (not fill) 8)
+             (c/rect (* x tile-size) (* y tile-size) tile-size tile-size color fill 8)
              (c/text (* x tile-size) (- (* (inc y) tile-size)) (str "(" x "," y ")") Color/red 10))
   ;;  (c2d/with-canvas-> (:canvas board)
   ;;    (c2d/set-color color)
@@ -40,10 +40,10 @@
         s3 (* tile-size 0.55)
         s4 (* tile-size 0.45)]
     (c/draw-> (:canvas board)
-              (c/ellipse x0 y0 s0 s0 Color/white false 5)
-              (c/ellipse x0 y0 s1 s1 Color/black false 5)
-              (c/ellipse x0 y0 s2 s2 (->> player-color (player) (first)) false 5)
-              (c/ellipse x0 y0 s3 s3 (->> player-color (player) (second)) false 5)
+              (c/ellipse x0 y0 s0 s0 Color/white false 10)
+              (c/ellipse x0 y0 s1 s1 Color/black false 10)
+              (c/ellipse x0 y0 s2 s2 (->> player-color (player) (first)) false 10)
+              (c/ellipse x0 y0 s3 s3 (->> player-color (player) (second)) false 10)
               (c/ellipse x0 y0 s4 s4 (->> player-color (player) (first)) true))
     ;; (c2d/with-canvas-> (:canvas board)
     ;;   (c2d/set-color :white)
@@ -99,11 +99,10 @@
 (defn show-player-label
   [^Board board player]
   (when player
-    (let [color (name (first (player player-color)))
-          color (concat (list (s/upper-case (first color))) (rest color))
+    (let [color (name (nth (player player-color) 2))
           color (apply str color)]
       (c/draw-> (:canvas board)
-                (c/text 10 25 color 24 :bold))
+                (c/text 10 25 color Color/red 24 :bold))
       ;; (c2d/with-canvas-> (:canvas board)
       ;;   (c2d/set-color :red)
       ;;   (c2d/set-font-attributes 24 :bold)
@@ -156,12 +155,9 @@
    (game event board tile)))
 
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
-  [_ _ widget]
+  [_ _ widget x y]
   (when (not (:locked @(:current-board widget)))
-    (let [window (:window @(:current-board widget))
-          x (c2d/mouse-x window)
-          y (c2d/mouse-y window)
-          locked (:locked (swap! (:current-board widget) merge (click-board-at-tile @(:current-board widget) (get-tile x y))))]
+    (let [locked (:locked (swap! (:current-board widget) merge (click-board-at-tile @(:current-board widget) (get-tile x y))))]
       (swap! (:current-board widget) assoc :locked true)
       (swap! (:current-board widget) merge(click-board-at-tile @(:current-board widget) (get-tile x y) :after-tile-clicked))
       (when (not locked)
