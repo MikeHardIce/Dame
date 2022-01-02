@@ -73,8 +73,8 @@
   []
   (gui/button! "btn-start" "Start" {:x 400 :y 300 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "menu"})
   (gui/update! "btn-start" [:events :mouse-clicked] (fn [_]
-                                                      (gui/update-skip-redraw! "Dame" :info-text nil)
                                                       (gui/remove-group! "menu")
+                                                      (gui/update-skip-redraw! "Dame" :info-text nil)
                                                       (create-play-mode-menu))))
 
 (defn create-quit-btn
