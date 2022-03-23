@@ -136,6 +136,10 @@
           new-board)))))
 
 (defmethod board/game :tile-clicked
+ [args]
+ )
+
+(defmethod board/game :tile-clicked
   [_ current-board coord]
   ;; either restricted moves is empty or the current clicked tile
   ;; belongs to a restricted move
@@ -177,7 +181,7 @@
     ;; redraw the game now with the potentially new state of the game
     (gui/update-skip-redraw! "Dame" :game @game)
     (board/draw-game current-board @game)
-    (board/show-player-label current-board (->> @current-player first first))
+    ;(board/show-player-label current-board (->> @current-player first first))
     current-board
     (when-let [winner (logic/get-winner @game)]
       (board/show-winner-banner current-board winner)
