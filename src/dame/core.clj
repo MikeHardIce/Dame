@@ -1,7 +1,8 @@
 (ns dame.core
   (:require [dame.game-board :as board]
             [dame.game-logic :as logic]
-            [strigui.core :as gui])
+            [strigui.core :as gui]
+            [clojure.set :as s])
   (:import [java.awt Color])
   (:gen-class))
 
@@ -33,11 +34,11 @@
 (defn mark-stone 
   ([game x y] (mark-stone game x y Color/green))
   ([game x y selection-color]
-  (let [row (game y)
-        element (nth row x)
-        element (assoc element :selected true :selection-color selection-color)
-        row (assoc row x element)]
-    (assoc game y row))))
+   (let [row (game y)
+         element (nth row x)
+         element (assoc element :selected true :selection-color selection-color)
+         row (assoc row x element)]
+     (assoc game y row))))
 
 (defn mark-moves
   [game moves]
@@ -50,52 +51,76 @@
       game)))
 
 (defn start-game
-  [player1-setting player2-setting]
-  (let [board (gui/find-by-name "Dame")]
-    (reset! game game-start)
-    (swap! (:current-board board) assoc :locked nil)
-    (reset! current-player (list player1-setting player2-setting))
-    (gui/update-skip-redraw! "Dame" :info-text (->> @current-player first first))
-    (gui/update! "Dame" :game @game)))
+  [widgets settings-player1 settings-player2]
+  (let [game {:board game-start
+              :players (list settings-player1 settings-player2)
+              :restricted-moves []}]
+   (-> widgets
+       (assoc-in ["Dame" :game] game)
+       (assoc-in ["Dame" :info-text] (-> current-player first first)))))
+
+(defn dissoc-widgets-by-group
+  [widgets group-name]
+  (let [widget-keys (->> (gui/find-widgets-by-group-name widgets group-name)
+                         (map :name))
+        keys-to-keep (s/difference (set (map :name widgets)) (set widget-keys))]
+    (select-keys widgets keys-to-keep)))
 
 (defn create-play-mode-menu
-  []
-  (gui/button! "btn-human" "vs Human" {:x 400 :y 300 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
-  (gui/update! "btn-human" [:events :mouse-clicked] (fn [_]
-                                                      (gui/remove-group! "play-menu")
-                                                      (start-game [:player1 :human] [:player2 :human])))
-  (gui/button! "btn-computer-easy" "vs Computer (easy)" {:x 300 :y 450 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
-  (gui/update! "btn-computer-easy" [:events :mouse-clicked] (fn [_]
-                                                      (gui/remove-group! "play-menu")
-                                                      (start-game [:player1 :human] [:player2 :easy]))))
+  [widgets]
+  (-> widgets
+      (gui/add-button "btn-human" "vs Human" {:x 400 :y 300 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
+      (gui/attach-event "btn-human" :mouse-clicked (fn [wdgs _]
+                                                     (-> wdgs
+                                                         (dissoc-widgets-by-group "play-menu")
+                                                         (start-game [:player1 :human] [:player2 :human]))))
+      (gui/add-button "btn-computer-easy" "vs Computer (easy)" {:x 300 :y 450 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
+      (gui/attach-event "btn-computer-easy" :mouse-clicked (fn [wdgs _]
+                                                             (-> wdgs
+                                                                 (dissoc-widgets-by-group "play-menu")
+                                                                 (start-game [:player1 :human] [:player2 :easy]))))
+      (gui/add-button "btn-easy-vs-easy" "Nah I just watch" {:x 300 :y 650 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
+      (gui/attach-event "btn-easy-vs-easy" :mouse-clicked (fn [wdgs _]
+                                                             (-> wdgs
+                                                                 (dissoc-widgets-by-group "play-menu")
+                                                                 (start-game [:player1 :easy] [:player2 :easy]))))))
 
 (defn create-start-btn
-  []
-  (gui/button! "btn-start" "Start" {:x 400 :y 300 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "menu"})
-  (gui/update! "btn-start" [:events :mouse-clicked] (fn [_]
-                                                      (gui/remove-group! "menu")
-                                                      (gui/update-skip-redraw! "Dame" :info-text nil)
-                                                      (create-play-mode-menu))))
+  [widgets]
+    (-> widgets
+        (gui/add-button "btn-start" "Start" {:x 400 :y 300 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "menu"})
+        (gui/attach-event "btn-start" :mouse-clicked (fn [wdgs _]
+                                                       (-> wdgs
+                                                           (dissoc-widgets-by-group "menu")
+                                                           (assoc-in ["Dame" :info-text] nil)
+                                                           (create-play-mode-menu))))))
 
 (defn create-quit-btn
-  []
-  (gui/button! "btn-quit" "Quit" {:x 400 :y 500 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "menu"})
-  (gui/update! "btn-quit" [:events :mouse-clicked] (fn [_]
-                                                     (gui/close-window))))
+  [widgets]
+  (-> widgets
+      (gui/add-button "btn-quit" "Quit" {:x 400 :y 500 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "menu"})
+      (gui/attach-event "btn-quit" :mouse-clicked (fn [_ _]
+                                                    (gui/close-window!)))))
 
 (defn create-menu
-  []
-  (create-start-btn)
-  (create-quit-btn))
+  [widgets]
+  (-> widgets
+      create-start-btn
+      create-quit-btn))
 
 (defn -main
   ""
   []
-  (let [window (gui/window! 400 400 1000 1000 "Dame")
-        game-board (board/create-board (-> window :context :canvas) (-> window :context :window) @game)]
-    (swap! (:current-board game-board) assoc :locked true)
-    (gui/create! game-board)
-    (create-menu)))
+  (gui/window! 400 400 1000 1000 "Dame")
+  (let [game {:board game-start
+              :players (list [:player1 :human] [:player2 :human])
+              :restricted-moves []}]
+    (gui/swap-widgets! 
+     (fn [wdgs]
+       (-> wdgs
+           (gui/add (board/create-board game))
+           (assoc-in ["Dame" :locked] true)
+           (create-menu))))))
 
 (defn computer-easy-move 
   [current-board]
@@ -136,61 +161,61 @@
           new-board)))))
 
 (defmethod board/game :tile-clicked
- [args]
- )
+ [args])
+ 
 
-(defmethod board/game :tile-clicked
-  [_ current-board coord]
-  ;; either restricted moves is empty or the current clicked tile
-  ;; belongs to a restricted move
-  (when (or (not (seq @restrict-moves))
-            (some #(= coord %) @restrict-moves))
-    (let [x (first coord)
-        y (second coord)
-        moves (logic/possible-moves @game x y)
-        tile ((@game y) x)
-        player (first (:player tile))
-        moves (if (= player (->> @current-player first first)) moves [])
-        cnt-opponent-stones-before (count (logic/get-stones @game (->> @current-player second first)))]
-    (if (and (seq tile) (:selected tile) (= (:selection-color tile) Color/yellow))
-      ;; find the stone that was selected previously (jump from :green -> :yellow-green)
-      (let [near-stones (for [xi (range 8)
-                              yi (range 8)]
-                          [xi yi (:selection-color ((@game yi) xi))])
-            [[x0 y0]] (filter (fn [item]
-                                (some #(= % Color/green) item))
-                              near-stones)]
-        (swap! game logic/next-game [x0 y0] [x y])
-        (swap! game unmark-all)
-        (let [potential-restricted-moves (filter #(seq (logic/stones-on-the-way @game [x y] % (->> @current-player second first))) 
-                                                 (logic/possible-moves @game x y))]
-          (if (and (< (count (logic/get-stones @game (->> @current-player second first))) cnt-opponent-stones-before)
-                   (seq potential-restricted-moves))
-            (do ;; an opponent stone was removed and the player can remove another stone
-              (swap! restrict-moves concat potential-restricted-moves)
-              (swap! game mark-moves potential-restricted-moves)
-              (swap! game mark-stone x y))
-            (do ;; if nothing happened, then hand the turn over to the next player
-              (swap! current-player reverse)
-              (reset! restrict-moves [])))))
-      (do ;; the player selected a tile that wasn't marked as :yellow-green 
-        ;; (outside of :green -> :yellow-green move)
-        (swap! game unmark-all)
-        (swap! game mark-moves moves)
-        (swap! game mark-stone x y)))))
-    ;; redraw the game now with the potentially new state of the game
-    (gui/update-skip-redraw! "Dame" :game @game)
-    (board/draw-game current-board @game)
-    ;(board/show-player-label current-board (->> @current-player first first))
-    current-board
-    (when-let [winner (logic/get-winner @game)]
-      (board/show-winner-banner current-board winner)
-      (create-menu)
-      (assoc current-board :locked true)))
+;; (defmethod board/game :tile-clicked
+;;   [_ current-board coord]
+;;   ;; either restricted moves is empty or the current clicked tile
+;;   ;; belongs to a restricted move
+;;   (when (or (not (seq @restrict-moves))
+;;             (some #(= coord %) @restrict-moves))
+;;     (let [x (first coord)
+;;         y (second coord)
+;;         moves (logic/possible-moves @game x y)
+;;         tile ((@game y) x)
+;;         player (first (:player tile))
+;;         moves (if (= player (->> @current-player first first)) moves [])
+;;         cnt-opponent-stones-before (count (logic/get-stones @game (->> @current-player second first)))]
+;;     (if (and (seq tile) (:selected tile) (= (:selection-color tile) Color/yellow))
+;;       ;; find the stone that was selected previously (jump from :green -> :yellow-green)
+;;       (let [near-stones (for [xi (range 8)
+;;                               yi (range 8)]
+;;                           [xi yi (:selection-color ((@game yi) xi))])
+;;             [[x0 y0]] (filter (fn [item]
+;;                                 (some #(= % Color/green) item))
+;;                               near-stones)]
+;;         (swap! game logic/next-game [x0 y0] [x y])
+;;         (swap! game unmark-all)
+;;         (let [potential-restricted-moves (filter #(seq (logic/stones-on-the-way @game [x y] % (->> @current-player second first))) 
+;;                                                  (logic/possible-moves @game x y))]
+;;           (if (and (< (count (logic/get-stones @game (->> @current-player second first))) cnt-opponent-stones-before)
+;;                    (seq potential-restricted-moves))
+;;             (do ;; an opponent stone was removed and the player can remove another stone
+;;               (swap! restrict-moves concat potential-restricted-moves)
+;;               (swap! game mark-moves potential-restricted-moves)
+;;               (swap! game mark-stone x y))
+;;             (do ;; if nothing happened, then hand the turn over to the next player
+;;               (swap! current-player reverse)
+;;               (reset! restrict-moves [])))))
+;;       (do ;; the player selected a tile that wasn't marked as :yellow-green 
+;;         ;; (outside of :green -> :yellow-green move)
+;;         (swap! game unmark-all)
+;;         (swap! game mark-moves moves)
+;;         (swap! game mark-stone x y)))))
+;;     ;; redraw the game now with the potentially new state of the game
+;;     (gui/update-skip-redraw! "Dame" :game @game)
+;;     (board/draw-game current-board @game)
+;;     ;(board/show-player-label current-board (->> @current-player first first))
+;;     current-board
+;;     (when-let [winner (logic/get-winner @game)]
+;;       (board/show-winner-banner current-board winner)
+;;       (create-menu)
+;;       (assoc current-board :locked true)))
 
-(defmethod board/game :after-tile-clicked
-  [_ current-board coord]
-  (if (and (not= (->> @current-player first second) :human)
-           (not (logic/get-winner @game)))
-    (computer-easy-move current-board)
-    current-board))
+;; (defmethod board/game :after-tile-clicked
+;;   [_ current-board coord]
+;;   (if (and (not= (->> @current-player first second) :human)
+;;            (not (logic/get-winner @game)))
+;;     (computer-easy-move current-board)
+;;     current-board))
