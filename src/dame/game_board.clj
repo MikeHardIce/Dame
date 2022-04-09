@@ -86,17 +86,17 @@
         y (Math/floor (/ y-coord tile-size))]
     [(int x) (int y)]))
 
-(defrecord Game-Board [name game locked args info-text big-text current-player restricted-moves]
+(defrecord Game-Board [name board locked args info-text big-text]
   wdg/Widget
   (coord [this canvas] [0 0 board-size board-size])
   (defaults [this] this);;(assoc-in this [:args :skip-redrawing] {:on-unselect true :on-click true :on-hover true}))
   (before-drawing [this] this)
   (draw [this canvas]
-          (draw-game canvas (:game this))
+          (draw-game canvas (-> this :board :game))
           (show-player-label canvas (:info-text this))
           (when-let [banner (:big-text this)]
             (show-banner canvas banner))
-          (show-player-label canvas (:current-player this))
+          (show-player-label canvas (-> this :board :current-player))
         this))
 
 ;; override hiding, since the gameboard fills out the entire screen anyway
@@ -110,7 +110,7 @@
 
 (defn create-board
   [game]
-    (->Game-Board "Dame" game nil {:x 0 :y 0 :z -5} nil nil :player1 nil))
+    (->Game-Board "Dame" game nil {:x 0 :y 0 :z -5} nil nil))
 
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
   [_ _ widgets widget x y]

@@ -15,12 +15,6 @@
                      [nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]}]
                      [{:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil {:player [:player1]} nil]])
 
-(def game (atom game-start))
-
-(def current-player (atom '([:player1 :human] [:player2 :human])))
-
-(def restrict-moves (atom []))
-
 (defn unmark-all 
   [game]
   (let [new-game (for [y (range (count game))
@@ -40,6 +34,16 @@
          row (assoc row x element)]
      (assoc game y row))))
 
+(defn get-marked-stone
+  "gets the first marked stone with its coordinates via :coord"
+  [game]
+  (let [a (for [x (range (count game))
+                y (range (count game))]
+            (when-let [stone (nth (game y) x)]
+              (when (:selected stone)
+                (assoc stone :coord [x y]))))]
+    (some identity a)))
+
 (defn mark-moves
   [game moves]
   (loop [potential-moves moves
@@ -52,11 +56,11 @@
 
 (defn start-game
   [widgets settings-player1 settings-player2]
-  (let [game {:board game-start
+  (let [board {:game game-start
               :players (list settings-player1 settings-player2)
               :restricted-moves []}]
    (-> widgets
-       (assoc-in ["Dame" :game] game)
+       (assoc-in ["Dame" :board] board)
        (assoc-in ["Dame" :info-text] (-> current-player first first)))))
 
 (defn dissoc-widgets-by-group
@@ -122,23 +126,23 @@
            (assoc-in ["Dame" :locked] true)
            (create-menu))))))
 
-(defn computer-easy-move 
-  [current-board]
-  (let [computer-player (->> @current-player first first)
+(defn computer-easy-move
+  [board]
+  (let [computer-player (-> board :game :players first first)
+        opponent (-> board :game :players second first)
+        game (-> board :game :board)
         stones (for [x (range 8)
                      y (range 8)]
-                 [x y (first (:player ((@game y) x)))])
-        stones (filter #(= (nth % 2 nil) (->> @current-player first first)) stones)
-        stones (map #(into {:stone %} {:moves (logic/possible-moves @game (first %) (second %))}) stones)
+                 [x y (first (:player ((game y) x)))])
+        stones (filter #(= (nth % 2 nil) computer-player) stones)
+        stones (map #(into {:stone %} {:moves (logic/possible-moves game (first %) (second %))}) stones)
         stones (filter #(seq (:moves %)) stones)
         stones (map #(assoc % :opponent-stones-on-the-way (vec (for [move (:moves %)]
                                                                  (into {:destination move}
                                                                        {:opponent (logic/stones-on-the-way
-                                                                                   @game
+                                                                                   game
                                                                                    (:stone %)
-                                                                                   move (->> @current-player
-                                                                                             second
-                                                                                             first))})))) stones)
+                                                                                   move opponent)})))) stones)
         good-moves (filter #(seq (->> % :opponent-stones-on-the-way :opponent)) stones)
         move (cond
                (seq good-moves) (let [m (rand-nth good-moves)]
@@ -146,22 +150,14 @@
                (seq stones) (let [m (rand-nth stones)]
                               (vector (:stone m) (->> m :moves rand-nth)))
                :else [])]
-    (loop [moves (vector (first move) (second move))
-           board current-board]
-      (let [new-board (merge board (board/click-board-at-tile board (first moves)))
-            new-moves (rest moves)
-            new-moves (if (and (= (->> @current-player first first) computer-player)
-                               (not (seq new-moves)))
-                        @restrict-moves
-                        new-moves)]
-        (if (seq new-moves)
-          (do
-            (Thread/sleep 500)
-            (recur new-moves new-board))
-          new-board)))))
+      (let [[x y] (first move)
+            game (mark-stone game x y)
+            board (assoc board :game game)]
+        (Thread/sleep 500)
+        board)))
 
 (defmethod board/game :tile-clicked
- [args])
+ [_ board tile-clicked])
  
 
 ;; (defmethod board/game :tile-clicked
