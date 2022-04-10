@@ -2,7 +2,8 @@
   (:require [dame.game-board :as board]
             [dame.game-logic :as logic]
             [strigui.core :as gui]
-            [clojure.set :as s])
+            [clojure.set :as s]
+            [clojure.core.async :refer [go-loop timeout <!]])
   (:import [java.awt Color])
   (:gen-class))
 
@@ -61,14 +62,7 @@
               :restricted-moves []}]
    (-> widgets
        (assoc-in ["Dame" :board] board)
-       (assoc-in ["Dame" :info-text] (-> current-player first first)))))
-
-(defn dissoc-widgets-by-group
-  [widgets group-name]
-  (let [widget-keys (->> (gui/find-widgets-by-group-name widgets group-name)
-                         (map :name))
-        keys-to-keep (s/difference (set (map :name widgets)) (set widget-keys))]
-    (select-keys widgets keys-to-keep)))
+       (assoc-in ["Dame" :info-text] (-> board :players first first)))))
 
 (defn create-play-mode-menu
   [widgets]
@@ -76,17 +70,18 @@
       (gui/add-button "btn-human" "vs Human" {:x 400 :y 300 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
       (gui/attach-event "btn-human" :mouse-clicked (fn [wdgs _]
                                                      (-> wdgs
-                                                         (dissoc-widgets-by-group "play-menu")
+                                                         (gui/remove-widget-group "play-menu")
                                                          (start-game [:player1 :human] [:player2 :human]))))
       (gui/add-button "btn-computer-easy" "vs Computer (easy)" {:x 300 :y 450 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
       (gui/attach-event "btn-computer-easy" :mouse-clicked (fn [wdgs _]
+                                                             
                                                              (-> wdgs
-                                                                 (dissoc-widgets-by-group "play-menu")
+                                                                 (gui/remove-widget-group "play-menu")
                                                                  (start-game [:player1 :human] [:player2 :easy]))))
       (gui/add-button "btn-easy-vs-easy" "Nah I just watch" {:x 300 :y 650 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
       (gui/attach-event "btn-easy-vs-easy" :mouse-clicked (fn [wdgs _]
                                                              (-> wdgs
-                                                                 (dissoc-widgets-by-group "play-menu")
+                                                                 (gui/remove-widget-group "play-menu")
                                                                  (start-game [:player1 :easy] [:player2 :easy]))))))
 
 (defn create-start-btn
@@ -95,7 +90,7 @@
         (gui/add-button "btn-start" "Start" {:x 400 :y 300 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "menu"})
         (gui/attach-event "btn-start" :mouse-clicked (fn [wdgs _]
                                                        (-> wdgs
-                                                           (dissoc-widgets-by-group "menu")
+                                                           (gui/remove-widget-group "menu")
                                                            (assoc-in ["Dame" :info-text] nil)
                                                            (create-play-mode-menu))))))
 
@@ -116,13 +111,14 @@
   ""
   []
   (gui/window! 400 400 1000 1000 "Dame")
-  (let [game {:board game-start
+  (let [board {:game game-start
               :players (list [:player1 :human] [:player2 :human])
-              :restricted-moves []}]
+              :restricted-moves []
+              :current-player :player1}]
     (gui/swap-widgets! 
      (fn [wdgs]
        (-> wdgs
-           (gui/add (board/create-board game))
+           (gui/add (board/create-board board))
            (assoc-in ["Dame" :locked] true)
            (create-menu))))))
 
@@ -130,7 +126,7 @@
   [board]
   (let [computer-player (-> board :game :players first first)
         opponent (-> board :game :players second first)
-        game (-> board :game :board)
+        game (-> board :game)
         stones (for [x (range 8)
                      y (range 8)]
                  [x y (first (:player ((game y) x)))])
@@ -150,11 +146,26 @@
                (seq stones) (let [m (rand-nth stones)]
                               (vector (:stone m) (->> m :moves rand-nth)))
                :else [])]
-      (let [[x y] (first move)
-            game (mark-stone game x y)
+      (let [[x y] (second move)
+            game (if (get-marked-stone game)
+                   (logic/next-game game (first move) (second move))
+                   (mark-stone game x y))
             board (assoc board :game game)]
-        (Thread/sleep 500)
         board)))
+
+(defn init-computer-player 
+  "Initializes a computer player, which is potentially its own thread"
+  [player]
+  (go-loop [winner (atom nil)]
+    (<! (timeout 1000))
+    (gui/swap-widgets! (fn [wdgs]
+                         (let [dame-wdg (wdgs "Dame")
+                               win (reset! winner (logic/get-winner (-> dame-wdg :board :game)))]
+                           (if (= (-> dame-wdg :board :game :current-player) player)
+                             (update-in wdgs ["Dame" :board] computer-easy-move))
+                           wdgs)))
+    (when (not @winner)
+      (recur winner))))
 
 (defmethod board/game :tile-clicked
  [_ board tile-clicked])
