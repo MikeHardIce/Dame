@@ -123,7 +123,7 @@
                                     (not win))
                              (update-in wdgs ["Dame" :board] computer-easy-move)
                              (if win
-                               (update-in wdgs ["Dame" :board :big-text] win)
+                               (assoc-in wdgs ["Dame" :big-text] win)
                                wdgs)))))
     (when (not @winner)
       (recur winner))))
