@@ -55,46 +55,60 @@
           (recur (rest potential-moves) (mark-stone game curr-x curr-y Color/yellow)))
       game)))
 
+(defn get-moves-for
+  "returns a map {:stone [x y] :moves [[x0 y0] [x1 y1] ...]}"
+  [game [x y]]
+  (into {:stone [x y]} {:moves (logic/possible-moves game x y)}))
+
+(defn get-all-stones-with-moves
+  "returns a sequence of maps of the form {:stone [x y] :moves [[x0 y0] [x1 y1] ...]}
+   and filters the sequence to only contain the maps containing moves"
+  [game current-player]
+  (let [stones (for [x (range (count game))
+                     y (range (count game))]
+                 [x y (first (:player ((game y) x)))])
+        stones (filter #(= (nth % 2 nil) current-player) stones)
+        stones (map (partial get-moves-for game) stones)]
+    (filter #(seq (:moves %)) stones)))
+
+(defn moves-with-opponent-on-way
+  "requires a map of the form {:stone [x y] :moves [[x0 y0] [x1 y1] ...]}
+   returns a vector with moves that have an opponent on the way"
+  [game opponent stone-with-moves]
+  (filterv #(logic/stones-on-the-way game (:stone stone-with-moves) % opponent) (:moves stone-with-moves)))
+
 (defn computer-easy-move
   [board]
   (let [computer-player (-> board :players first first)
         opponent (-> board :players second first)
         game (-> board :game)
-        stones (for [x (range (count game))
-                     y (range (count game))]
-                 [x y (first (:player ((game y) x)))])
-        coord-marked (-> game get-marked-stone :coord)
-        bla (println "Marked stone: " coord-marked)
-        stones (if coord-marked 
-                 '([(first coord-marked) (second coord-marked) computer-player])
-                 (filter #(= (nth % 2 nil) computer-player) stones))
-        stones (map #(into {:stone %} {:moves (logic/possible-moves game (first %) (second %))}) stones)
-        bla (println "Stones: " stones)
-        stones (filter #(seq (:moves %)) stones)
-        stones (map #(assoc % :opponent-stones-on-the-way (vec (for [move (:moves %)]
-                                                                 (into {:destination move}
-                                                                       {:opponent (logic/stones-on-the-way
-                                                                                   game
-                                                                                   (:stone %)
-                                                                                   move opponent)})))) stones)
-        good-moves (filter #(seq (->> % :opponent-stones-on-the-way :opponent)) stones)
-        move (cond
-               (seq good-moves) (let [m (rand-nth good-moves)]
-                                  (vector (:stone m) (->> m :opponent-stones-on-the-way rand-nth :destination)))
-               (seq stones) (let [m (rand-nth stones)]
-                              (vector (:stone m) (->> m :moves rand-nth)))
-               :else [])]
-      (if (seq move)
-        (let [[x y] (first move)
-              bla (println "Moves: " move)
-              game (if coord-marked
-                     (logic/next-game game (first move) (second move))
-                     (mark-stone game x y))
-              board (assoc board :game game)]
-          board)
-        (-> board 
-            (update :players reverse)
-            (assoc :restricted-moves [])))))
+        coord-marked (-> game get-marked-stone :coord)]
+    (if (seq coord-marked)
+      (let [stone-with-moves (get-moves-for game coord-marked)
+            moves-with-opponents (moves-with-opponent-on-way game opponent stone-with-moves)]
+        (if (seq moves-with-opponents)
+          (let [move (rand-nth moves-with-opponents)  
+                can-jump-more (get-moves-for game move)
+                can-jump-more (moves-with-opponent-on-way game opponent can-jump-more)
+                board (update board :game logic/next-game coord-marked move)]
+            (if (seq can-jump-more)
+              (update board :game mark-stone (first move) (second move))
+              (-> board
+                  (update :game unmark-all)
+                  (update :players reverse))))
+          (let [move (rand-nth stone-with-moves)]
+            (-> board
+                (update :game logic/next-game coord-marked move)
+                (update :game unmark-all)
+                (update :players reverse)))))
+      (let [stones (get-all-stones-with-moves game computer-player) ; fresh turn
+            stone-w-opponents (filter (partial moves-with-opponent-on-way game opponent) stones)
+            stones (if (seq stone-w-opponents) stone-w-opponents stones)
+            stone (rand-nth stones)
+            [x y] (:stone stone)]
+        (if (seq stone)
+          (update board :game mark-stone x y)
+          (update board :players reverse))))))
 
 (defn init-computer-player 
   "Initializes a computer player, which is potentially its own thread"
@@ -105,9 +119,12 @@
                          (println "Swap for " player)
                          (let [dame-wdg (wdgs "Dame")
                                win (reset! winner (logic/get-winner (-> dame-wdg :board :game)))]
-                           (if (= (-> dame-wdg :board :players first first) player)
+                           (if (and (= (-> dame-wdg :board :players first first) player)
+                                    (not win))
                              (update-in wdgs ["Dame" :board] computer-easy-move)
-                             wdgs))))
+                             (if win
+                               (update-in wdgs ["Dame" :board :big-text] win)
+                               wdgs)))))
     (when (not @winner)
       (recur winner))))
 
