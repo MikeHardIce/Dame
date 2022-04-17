@@ -7,6 +7,15 @@
   (:import [java.awt Color])
   (:gen-class))
 
+(defonce zig-zag [[nil nil nil nil nil {:player [:player2]} nil nil]
+                  [nil nil nil nil nil nil nil nil]
+                  [nil nil nil {:player [:player2]} nil nil nil nil]
+                  [nil nil nil nil nil nil nil nil]
+                  [nil {:player [:player2]} nil nil nil nil nil nil]
+                  [{:player [:player1]} nil nil nil nil nil nil nil]
+                  [nil nil nil nil nil nil nil nil]
+                  [nil nil nil nil nil nil nil nil]])
+
 (defonce game-start [[nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
                      [{:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil]
                      [nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]} nil {:player [:player2]}]
@@ -75,7 +84,7 @@
   "requires a map of the form {:stone [x y] :moves [[x0 y0] [x1 y1] ...]}
    returns a vector with moves that have an opponent on the way"
   [game opponent stone-with-moves]
-  (filterv #(logic/stones-on-the-way game (:stone stone-with-moves) % opponent) (:moves stone-with-moves)))
+  (filterv #(seq (logic/stones-on-the-way game (:stone stone-with-moves) % opponent)) (:moves stone-with-moves)))
 
 (defn computer-easy-move
   [board]
@@ -87,16 +96,17 @@
       (let [stone-with-moves (get-moves-for game coord-marked)
             moves-with-opponents (moves-with-opponent-on-way game opponent stone-with-moves)]
         (if (seq moves-with-opponents)
-          (let [move (rand-nth moves-with-opponents)  
+          (let [move (rand-nth moves-with-opponents)
+                board (update board :game logic/next-game coord-marked move)
+                game (:game board)
                 can-jump-more (get-moves-for game move)
-                can-jump-more (moves-with-opponent-on-way game opponent can-jump-more)
-                board (update board :game logic/next-game coord-marked move)]
+                can-jump-more (moves-with-opponent-on-way game opponent can-jump-more)]
             (if (seq can-jump-more)
               (update board :game mark-stone (first move) (second move))
               (-> board
                   (update :game unmark-all)
                   (update :players reverse))))
-          (let [move (rand-nth stone-with-moves)]
+          (let [move (rand-nth (:moves stone-with-moves))]
             (-> board
                 (update :game logic/next-game coord-marked move)
                 (update :game unmark-all)
@@ -116,7 +126,6 @@
   (go-loop [winner (atom nil)]
     (<! (timeout 2000))
     (gui/swap-widgets! (fn [wdgs]
-                         (println "Swap for " player)
                          (let [dame-wdg (wdgs "Dame")
                                win (reset! winner (logic/get-winner (-> dame-wdg :board :game)))]
                            (if (and (= (-> dame-wdg :board :players first first) player)

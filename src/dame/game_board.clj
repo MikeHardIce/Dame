@@ -15,7 +15,7 @@
   ([canvas x y color fill]
    (c/draw-> canvas
              (c/rect (* x tile-size) (* y tile-size) tile-size tile-size color fill 8)
-             (c/text (* x tile-size) (- (* (inc y) tile-size)) (str "(" x "," y ")") Color/red 10))))
+             (c/text (* x tile-size) (* y tile-size) (str "(" x "," (dec y) ")") Color/red 14))))
 
 (defn draw-stone
   [canvas x y player]
