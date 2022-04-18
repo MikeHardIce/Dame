@@ -46,13 +46,14 @@
 
 (defn get-marked-stone
   "gets the first marked stone with its coordinates via :coord"
-  [game]
+  ([game] (get-marked-stone game Color/green))
+  ([game color]
   (let [a (for [x (range (count game))
                 y (range (count game))]
             (when-let [stone (nth (game y) x)]
-              (when (:selected stone)
+              (when (and (:selected stone) (= (:selection-color stone) color))
                 (assoc stone :coord [x y]))))]
-    (some identity a)))
+    (filterv identity a))))
 
 (defn mark-moves
   [game moves]
@@ -91,7 +92,7 @@
   (let [computer-player (-> board :players first first)
         opponent (-> board :players second first)
         game (-> board :game)
-        coord-marked (-> game get-marked-stone :coord)]
+        coord-marked (-> game get-marked-stone first :coord)]
     (if (seq coord-marked)
       (let [stone-with-moves (get-moves-for game coord-marked)
             moves-with-opponents (moves-with-opponent-on-way game opponent stone-with-moves)]
@@ -115,9 +116,12 @@
             stone-w-opponents (filter (partial moves-with-opponent-on-way game opponent) stones)
             stones (if (seq stone-w-opponents) stone-w-opponents stones)
             stone (rand-nth stones)
-            [x y] (:stone stone)]
+            [x y] (:stone stone)
+            moves (:moves stone)]
         (if (seq stone)
-          (update board :game mark-stone x y)
+          (-> board
+              (update :game mark-stone x y)
+              (update :game mark-moves moves))
           (update board :players reverse))))))
 
 (defn init-computer-player 
@@ -127,38 +131,50 @@
     (<! (timeout 2000))
     (gui/swap-widgets! (fn [wdgs]
                          (let [dame-wdg (wdgs "Dame")
-                               win (reset! winner (logic/get-winner (-> dame-wdg :board :game)))]
-                           (if (and (= (-> dame-wdg :board :players first first) player)
-                                    (not win))
-                             (update-in wdgs ["Dame" :board] computer-easy-move)
-                             (if win
-                               (let [fn-exit (-> dame-wdg :board :fn-exit)]
-                                 (-> wdgs
-                                     (assoc-in ["Dame" :big-text] win)
-                                     fn-exit))
-                               wdgs)))))
+                               win (reset! winner (logic/get-winner (-> dame-wdg :board :game)))
+                               wdgs (if (and (= (-> dame-wdg :board :players first first) player)
+                                             (not win))
+                                      (update-in wdgs ["Dame" :board] computer-easy-move)
+                                      (if win
+                                        (let [fn-exit (-> dame-wdg :board :fn-exit)]
+                                          (-> wdgs
+                                              (assoc-in ["Dame" :big-text] win)
+                                              fn-exit))
+                                        wdgs))
+                               current-player (-> (wdgs "Dame") :board :players first first)
+                               player-type (-> (wdgs "Dame") :board :players first second)]
+                           (-> wdgs
+                               (assoc-in ["Dame" :info-text] current-player)
+                               (assoc-in ["Dame" :locked] (not= :human player-type)))
+                           )))
     (when (not @winner)
       (recur winner))))
 
 (defmethod board/game :tile-clicked
  [_ game-board tile-clicked]
+  (let [board (:board game-board)
+        player (-> board :players first first)
+        opponent (-> board :players second first)
+        game (-> board :game)
+        coords-marked (mapv :coord (-> game (get-marked-stone Color/yellow)))])
   game-board)
  
 (defn start-game
   [widgets settings-player1 settings-player2 fn-exit-screen]
-  (let [board {:game game-start
+  (let [first-player-computer? (not= :human (second settings-player1))
+        board {:game game-start
                :players (list settings-player1 settings-player2)
-               :restricted-moves []
                :current-player :player1
                :fn-exit fn-exit-screen}]
     (-> widgets
         (assoc-in ["Dame" :board] board)
-        (assoc-in ["Dame" :info-text] (-> board :players first first)))))
+        (assoc-in ["Dame" :info-text] (-> board :players first first))
+        (assoc-in ["Dame" :locked] first-player-computer?))))
 
 (defn create-end-screen
   [widgets fn-create-main-menu]
   (-> widgets
-      (gui/add-button "btn-back" "Back to Main Menu" {:x 550 :y 700 :width 250 :color [Color/white Color/black] :font-size 28 :group "back"})
+      (gui/add-button "btn-back" "Back to Main Menu" {:x 500 :y 700 :z 30 :width 250 :color [Color/white Color/black] :font-size 28 :group "back"})
       (gui/attach-event "btn-back" :mouse-clicked (fn [wdgs]
                                                     (-> wdgs
                                                         (gui/remove-widget-group "back")
@@ -171,8 +187,9 @@
       (gui/attach-event "btn-human" :mouse-clicked (fn [wdgs _]
                                                      (-> wdgs
                                                          (gui/remove-widget-group "play-menu")
-                                                         (start-game [:player1 :human] [:player2 :human] (fn [w] (-> w 
-                                                                                                                     (create-end-screen fn-create-main-menu)))))))
+                                                         (start-game [:player1 :human] [:player2 :human] (fn [w]
+                                                                                                           (-> w
+                                                                                                               (create-end-screen fn-create-main-menu)))))))
       (gui/add-button "btn-computer-easy" "vs Computer (easy)" {:x 300 :y 450 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
       (gui/attach-event "btn-computer-easy" :mouse-clicked (fn [wdgs _]
                                                              (init-computer-player :player2)
@@ -180,14 +197,15 @@
                                                                  (gui/remove-widget-group "play-menu")
                                                                  (start-game [:player1 :human] [:player2 :easy] (fn [w] (-> w
                                                                                                                             (create-end-screen fn-create-main-menu)))))))
-      (gui/add-button "btn-easy-vs-easy" "Nah I just watch" {:x 300 :y 650 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
+      (gui/add-button "btn-easy-vs-easy" "Nah I just watch" {:x 350 :y 650 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
       (gui/attach-event "btn-easy-vs-easy" :mouse-clicked (fn [wdgs _]
                                                             (init-computer-player :player1)
                                                             (init-computer-player :player2)
                                                             (-> wdgs
                                                                 (gui/remove-widget-group "play-menu")
-                                                                (start-game [:player1 :easy] [:player2 :easy] (fn [w] (-> w
-                                                                                                                          (create-end-screen fn-create-main-menu)))))))))
+                                                                (start-game [:player1 :easy] [:player2 :easy] (fn [w]
+                                                                                                                (-> w
+                                                                                                                    (create-end-screen fn-create-main-menu)))))))))
 
 (defn create-start-btn
   [widgets fn-create-main-menu]
@@ -217,8 +235,7 @@
   []
   (gui/window! 400 400 1000 1000 "Dame")
   (let [board {:game game-start
-               :players (list [:player1 :human] [:player2 :human])
-               :restricted-moves []}]
+               :players (list [:player1 :human] [:player2 :human])}]
     (gui/swap-widgets!
      (fn [wdgs]
        (-> wdgs

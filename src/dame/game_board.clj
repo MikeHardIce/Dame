@@ -68,6 +68,7 @@
     (let [color (name (nth (player player-color) 2))
           color (apply str color)]
       (c/draw-> canvas
+                (c/rect 0 0 tile-size tile-size Color/white true)
                 (c/text 10 25 color Color/red 24 :bold)))))
 
 (defn show-banner
