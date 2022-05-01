@@ -150,14 +150,50 @@
     (when (not @winner)
       (recur winner))))
 
-(defmethod board/game :tile-clicked
- [_ game-board tile-clicked]
-  (let [board (:board game-board)
-        player (-> board :players first first)
+(defn human-player-move
+  [board tile-clicked]
+  (let [player (-> board :players first first)
         opponent (-> board :players second first)
         game (-> board :game)
-        coords-marked (mapv :coord (-> game (get-marked-stone Color/yellow)))])
-  game-board)
+        coords-marked (mapv :coord (-> game (get-marked-stone Color/yellow)))]
+    (if (some #(= % tile-clicked) coords-marked)
+      (let [green-tile (:coord (get-marked-stone game Color/green))
+            [x y] tile-clicked
+            further-moves (->> tile-clicked
+                               (get-moves-for game)
+                               (moves-with-opponent-on-way game opponent))
+            board (if (seq further-moves)
+                    (loop [board (update board :game mark-stone x y)
+                           moves further-moves]
+                      (if (seq moves)
+                        (recur (update board :game mark-stone (-> moves first first) (-> moves first second) Color/yellow)
+                               (rest moves))
+                        board))
+                    (-> board
+                        (update :game unmark-all)
+                        (update :players reverse)))]
+        (update board :game logic/next-game green-tile tile-clicked))
+      (let [[x y] tile-clicked
+            board (-> board
+                      (update :game unmark-all)
+                      (update :game mark-stone x y))
+            tile-owned-by (first (:player ((game y) x)))]
+        (if (= tile-owned-by player)
+          (let [further-moves (:moves (get-moves-for game tile-clicked))
+                board (if (seq further-moves)
+                        (loop [board (update board :game mark-stone x y)
+                               moves further-moves]
+                          (if (seq moves)
+                            (recur (update board :game mark-stone (-> moves first first) (-> moves first second) Color/yellow)
+                                   (rest moves))
+                            board))
+                        board)]
+            board)
+          board)))))
+
+(defmethod board/game :tile-clicked
+ [_ game-board tile-clicked]
+  (update game-board :board human-player-move tile-clicked))
  
 (defn start-game
   [widgets settings-player1 settings-player2 fn-exit-screen]
@@ -242,59 +278,3 @@
            (gui/add (board/create-board board))
            (assoc-in ["Dame" :locked] true)
            (create-menu))))))
-
-;; (defmethod board/game :tile-clicked
-;;   [_ current-board coord]
-;;   ;; either restricted moves is empty or the current clicked tile
-;;   ;; belongs to a restricted move
-;;   (when (or (not (seq @restrict-moves))
-;;             (some #(= coord %) @restrict-moves))
-;;     (let [x (first coord)
-;;         y (second coord)
-;;         moves (logic/possible-moves @game x y)
-;;         tile ((@game y) x)
-;;         player (first (:player tile))
-;;         moves (if (= player (->> @current-player first first)) moves [])
-;;         cnt-opponent-stones-before (count (logic/get-stones @game (->> @current-player second first)))]
-;;     (if (and (seq tile) (:selected tile) (= (:selection-color tile) Color/yellow))
-;;       ;; find the stone that was selected previously (jump from :green -> :yellow-green)
-;;       (let [near-stones (for [xi (range 8)
-;;                               yi (range 8)]
-;;                           [xi yi (:selection-color ((@game yi) xi))])
-;;             [[x0 y0]] (filter (fn [item]
-;;                                 (some #(= % Color/green) item))
-;;                               near-stones)]
-;;         (swap! game logic/next-game [x0 y0] [x y])
-;;         (swap! game unmark-all)
-;;         (let [potential-restricted-moves (filter #(seq (logic/stones-on-the-way @game [x y] % (->> @current-player second first))) 
-;;                                                  (logic/possible-moves @game x y))]
-;;           (if (and (< (count (logic/get-stones @game (->> @current-player second first))) cnt-opponent-stones-before)
-;;                    (seq potential-restricted-moves))
-;;             (do ;; an opponent stone was removed and the player can remove another stone
-;;               (swap! restrict-moves concat potential-restricted-moves)
-;;               (swap! game mark-moves potential-restricted-moves)
-;;               (swap! game mark-stone x y))
-;;             (do ;; if nothing happened, then hand the turn over to the next player
-;;               (swap! current-player reverse)
-;;               (reset! restrict-moves [])))))
-;;       (do ;; the player selected a tile that wasn't marked as :yellow-green 
-;;         ;; (outside of :green -> :yellow-green move)
-;;         (swap! game unmark-all)
-;;         (swap! game mark-moves moves)
-;;         (swap! game mark-stone x y)))))
-;;     ;; redraw the game now with the potentially new state of the game
-;;     (gui/update-skip-redraw! "Dame" :game @game)
-;;     (board/draw-game current-board @game)
-;;     ;(board/show-player-label current-board (->> @current-player first first))
-;;     current-board
-;;     (when-let [winner (logic/get-winner @game)]
-;;       (board/show-winner-banner current-board winner)
-;;       (create-menu)
-;;       (assoc current-board :locked true)))
-
-;; (defmethod board/game :after-tile-clicked
-;;   [_ current-board coord]
-;;   (if (and (not= (->> @current-player first second) :human)
-;;            (not (logic/get-winner @game)))
-;;     (computer-easy-move current-board)
-;;     current-board))

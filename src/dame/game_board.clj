@@ -116,6 +116,6 @@
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
   [_ _ widgets widget x y]
   (if (not (:locked widget))
-    (let [widget (game :mouse-clicked widget (get-tile x y))]
+    (let [widget (game :tile-clicked widget (get-tile x y))]
       (assoc widgets (:name widget) widget))
     widgets))
