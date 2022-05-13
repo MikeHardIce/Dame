@@ -198,7 +198,7 @@
 (defn start-game
   [widgets settings-player1 settings-player2 fn-exit-screen]
   (let [first-player-computer? (not= :human (second settings-player1))
-        board {:game game-start
+        board {:game zig-zag
                :players (list settings-player1 settings-player2)
                :current-player :player1
                :fn-exit fn-exit-screen}]
@@ -211,9 +211,10 @@
   [widgets fn-create-main-menu]
   (-> widgets
       (gui/add-button "btn-back" "Back to Main Menu" {:x 500 :y 700 :z 30 :width 250 :color [Color/white Color/black] :font-size 28 :group "back"})
-      (gui/attach-event "btn-back" :mouse-clicked (fn [wdgs]
+      (gui/attach-event "btn-back" :mouse-clicked (fn [wdgs _]
                                                     (-> wdgs
                                                         (gui/remove-widget-group "back")
+                                                        (assoc-in ["Dame" :big-text] nil)
                                                         fn-create-main-menu)))))
 
 (defn create-play-mode-menu
