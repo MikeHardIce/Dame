@@ -157,12 +157,15 @@
         game (-> board :game)
         coords-marked (mapv :coord (-> game (get-marked-stone Color/yellow)))]
     (if (some #(= % tile-clicked) coords-marked)
-      (let [green-tile (:coord (get-marked-stone game Color/green))
+      (let [green-tile (->> (get-marked-stone game Color/green) first :coord)
             [x y] tile-clicked
+            opponent-on-current-way (logic/stones-on-the-way game green-tile tile-clicked opponent)
+            board (update board :game logic/next-game green-tile tile-clicked)
+            game (:game board)
             further-moves (->> tile-clicked
                                (get-moves-for game)
                                (moves-with-opponent-on-way game opponent))
-            board (if (seq further-moves)
+            board (if (and (seq further-moves) (seq opponent-on-current-way))
                     (loop [board (update board :game mark-stone x y)
                            moves further-moves]
                       (if (seq moves)
@@ -172,7 +175,7 @@
                     (-> board
                         (update :game unmark-all)
                         (update :players reverse)))]
-        (update board :game logic/next-game green-tile tile-clicked))
+        board)
       (let [[x y] tile-clicked
             board (-> board
                       (update :game unmark-all)
@@ -198,7 +201,7 @@
 (defn start-game
   [widgets settings-player1 settings-player2 fn-exit-screen]
   (let [first-player-computer? (not= :human (second settings-player1))
-        board {:game zig-zag
+        board {:game game-start
                :players (list settings-player1 settings-player2)
                :current-player :player1
                :fn-exit fn-exit-screen}]
