@@ -94,10 +94,9 @@
   (before-drawing [this] this)
   (draw [this canvas]
           (draw-game canvas (-> this :board :game))
-          (show-player-label canvas (:info-text this))
           (when-let [banner (:big-text this)]
             (show-banner canvas banner))
-          (show-player-label canvas (-> this :board :current-player))
+          (show-player-label canvas (-> this :board :players first first))
         this))
 
 ;; override hiding, since the gameboard fills out the entire screen anyway
