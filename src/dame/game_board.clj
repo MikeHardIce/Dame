@@ -87,7 +87,7 @@
         y (Math/floor (/ y-coord tile-size))]
     [(int x) (int y)]))
 
-(defrecord Game-Board [name board locked args info-text big-text]
+(defrecord Game-Board [name board locked args big-text]
   wdg/Widget
   (coord [this canvas] [0 0 board-size board-size])
   (defaults [this] this);;(assoc-in this [:args :skip-redrawing] {:on-unselect true :on-click true :on-hover true}))
@@ -110,7 +110,7 @@
 
 (defn create-board
   [game]
-    (->Game-Board "Dame" game nil {:x 0 :y 0 :z -5} nil nil))
+    (->Game-Board "Dame" game nil {:x 0 :y 0 :z -5} nil))
 
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
   [_ _ widgets widget x y]

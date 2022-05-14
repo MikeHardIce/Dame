@@ -141,12 +141,8 @@
                                               (assoc-in ["Dame" :big-text] win)
                                               fn-exit))
                                         wdgs))
-                               current-player (-> (wdgs "Dame") :board :players first first)
                                player-type (-> (wdgs "Dame") :board :players first second)]
-                           (-> wdgs
-                               (assoc-in ["Dame" :info-text] current-player)
-                               (assoc-in ["Dame" :locked] (not= :human player-type)))
-                           )))
+                               (assoc-in wdgs ["Dame" :locked] (not= :human player-type)))))
     (when (not @winner)
       (recur winner))))
 
@@ -207,7 +203,6 @@
                :fn-exit fn-exit-screen}]
     (-> widgets
         (assoc-in ["Dame" :board] board)
-        (assoc-in ["Dame" :info-text] (-> board :players first first))
         (assoc-in ["Dame" :locked] first-player-computer?))))
 
 (defn create-end-screen
@@ -254,7 +249,6 @@
       (gui/attach-event "btn-start" :mouse-clicked (fn [wdgs _]
                                                      (-> wdgs
                                                          (gui/remove-widget-group "menu")
-                                                         (assoc-in ["Dame" :info-text] nil)
                                                          (create-play-mode-menu fn-create-main-menu))))))
 
 (defn create-quit-btn
