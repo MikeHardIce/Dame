@@ -7,6 +7,8 @@
   (:import [java.awt Color])
   (:gen-class))
 
+(defonce color-for-button [(Color. 220 220 150) (Color/black)])
+
 (defonce zig-zag [[nil nil nil nil nil {:player [:player2]} nil nil]
                   [nil nil nil nil nil nil nil nil]
                   [nil nil nil {:player [:player2]} nil nil nil nil]
@@ -197,7 +199,7 @@
 (defn start-game
   [widgets settings-player1 settings-player2 fn-exit-screen]
   (let [first-player-computer? (not= :human (second settings-player1))
-        board {:game game-start
+        board {:game zig-zag
                :players (list settings-player1 settings-player2)
                :current-player :player1
                :fn-exit fn-exit-screen}]
@@ -208,7 +210,7 @@
 (defn create-end-screen
   [widgets fn-create-main-menu]
   (-> widgets
-      (gui/add-button "btn-back" "Back to Main Menu" {:x 500 :y 700 :z 30 :width 250 :color [Color/white Color/black] :font-size 28 :group "back"})
+      (gui/add-button "btn-back" "Back to Main Menu" {:x 500 :y 700 :z 30 :width 250 :color color-for-button :font-size 28 :group "back"})
       (gui/attach-event "btn-back" :mouse-clicked (fn [wdgs _]
                                                     (-> wdgs
                                                         (gui/remove-widget-group "back")
@@ -218,21 +220,21 @@
 (defn create-play-mode-menu
   [widgets fn-create-main-menu]
   (-> widgets
-      (gui/add-button "btn-human" "vs Human" {:x 400 :y 300 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
+      (gui/add-button "btn-human" "vs Human" {:x 260 :y 250 :z 3 :width 500 :color color-for-button :font-size 28 :group "play-menu"})
       (gui/attach-event "btn-human" :mouse-clicked (fn [wdgs _]
                                                      (-> wdgs
                                                          (gui/remove-widget-group "play-menu")
                                                          (start-game [:player1 :human] [:player2 :human] (fn [w]
                                                                                                            (-> w
                                                                                                                (create-end-screen fn-create-main-menu)))))))
-      (gui/add-button "btn-computer-easy" "vs Computer (easy)" {:x 300 :y 450 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
+      (gui/add-button "btn-computer-easy" "vs Computer (easy)" {:x 260 :y 400 :z 3 :width 500 :color color-for-button :font-size 28 :group "play-menu"})
       (gui/attach-event "btn-computer-easy" :mouse-clicked (fn [wdgs _]
                                                              (init-computer-player :player2)
                                                              (-> wdgs
                                                                  (gui/remove-widget-group "play-menu")
                                                                  (start-game [:player1 :human] [:player2 :easy] (fn [w] (-> w
                                                                                                                             (create-end-screen fn-create-main-menu)))))))
-      (gui/add-button "btn-easy-vs-easy" "Nah I just watch" {:x 350 :y 650 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "play-menu"})
+      (gui/add-button "btn-easy-vs-easy" "Nah I just watch" {:x 260 :y 550 :z 3 :width 500 :color color-for-button :font-size 28 :group "play-menu"})
       (gui/attach-event "btn-easy-vs-easy" :mouse-clicked (fn [wdgs _]
                                                             (init-computer-player :player1)
                                                             (init-computer-player :player2)
@@ -245,7 +247,7 @@
 (defn create-start-btn
   [widgets fn-create-main-menu]
   (-> widgets
-      (gui/add-button "btn-start" "Start" {:x 400 :y 300 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "menu"})
+      (gui/add-button "btn-start" "Start" {:x 400 :y 300 :z 3 :width 250 :color color-for-button :font-size 28 :group "menu"})
       (gui/attach-event "btn-start" :mouse-clicked (fn [wdgs _]
                                                      (-> wdgs
                                                          (gui/remove-widget-group "menu")
@@ -254,7 +256,7 @@
 (defn create-quit-btn
   [widgets]
   (-> widgets
-      (gui/add-button "btn-quit" "Quit" {:x 400 :y 500 :z 3 :width 250 :color [Color/white Color/black] :font-size 28 :group "menu"})
+      (gui/add-button "btn-quit" "Quit" {:x 400 :y 500 :z 3 :width 250 :color color-for-button :font-size 28 :group "menu"})
       (gui/attach-event "btn-quit" :mouse-clicked (fn [_ _]
                                                     (gui/close-window!)))))
 

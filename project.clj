@@ -2,7 +2,7 @@
   :description "A Clojure implementation of the german checker game called Dame (Lady)"
   :url "https://github.com/MikeHardIce/Dame"
   :dependencies [[org.clojure/clojure "1.10.3"]
-                 [com.github.mikehardice/capra "0.0.1-alpha4"]
+                 [com.github.mikehardice/capra "0.0.2"]
                  [strigui "0.0.1-alpha26"]
                  [org.clojure/core.async "1.4.627"]]
   :keep-non-project-classes true
