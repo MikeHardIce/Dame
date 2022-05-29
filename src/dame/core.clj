@@ -269,7 +269,8 @@
 (defn -main
   ""
   []
-  (gui/window! 400 400 1000 1000 "Dame")
+  (gui/window! 400 400 1000 1000 "Dame" Color/white {java.awt.RenderingHints/KEY_ANTIALIASING java.awt.RenderingHints/VALUE_ANTIALIAS_ON
+                                                     java.awt.RenderingHints/KEY_RENDERING java.awt.RenderingHints/VALUE_RENDER_SPEED})
   (let [board {:game game-start
                :players (list [:player1 :human] [:player2 :human])}]
     (gui/swap-widgets!
