@@ -15,7 +15,8 @@
   ([canvas x y color fill]
    (c/draw-> canvas
              (c/rect (* x tile-size) (* y tile-size) tile-size tile-size color fill 8)
-             (c/text (* x tile-size) (* y tile-size) (str "(" x "," (dec y) ")") Color/red 14))))
+             ;;(c/text (* x tile-size) (* y tile-size) (str "(" x "," (dec y) ")") Color/red 14)
+             )))
 
 (defn draw-stone
   [canvas x y player]
@@ -97,7 +98,8 @@
           (when-let [banner (:big-text this)]
             (show-banner canvas banner))
           (show-player-label canvas (-> this :board :players first first))
-        this))
+        this)
+  (after-drawing [this] this))
 
 ;; override hiding, since the gameboard fills out the entire screen anyway
 (extend-protocol wdg/Hide

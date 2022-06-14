@@ -199,7 +199,7 @@
 (defn start-game
   [widgets settings-player1 settings-player2 fn-exit-screen]
   (let [first-player-computer? (not= :human (second settings-player1))
-        board {:game zig-zag
+        board {:game game-start
                :players (list settings-player1 settings-player2)
                :current-player :player1
                :fn-exit fn-exit-screen}]

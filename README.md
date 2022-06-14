@@ -7,6 +7,7 @@ Get the OpenJDK 17 from [Adoptium](https://adoptium.net/)
 
 ## New
 Now playable vs Computer (easy)
+or watch Computer vs Computer.
 
 ![](resources/Dame.png)
 
