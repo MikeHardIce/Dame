@@ -30,16 +30,16 @@
     (c/draw-> canvas
               (c/ellipse x0 y0 s0 s0 Color/white false 10)
               (c/ellipse x0 y0 s1 s1 Color/black false 10)
-              (c/ellipse x0 y0 s2 s2 (->> player-color (player) (first)) false 10)
-              (c/ellipse x0 y0 s3 s3 (->> player-color (player) (second)) false 10)
-              (c/ellipse x0 y0 s4 s4 (->> player-color (player) (first)) true))))
+              (c/ellipse x0 y0 s2 s2 (->> player-color player first) false 10)
+              (c/ellipse x0 y0 s3 s3 (->> player-color player second) false 10)
+              (c/ellipse x0 y0 s4 s4 (->> player-color player first) true))))
 
 (defn draw-dame-sign
   "Draws an upsite down cross inside a D at the current tile"
   [canvas x y player]
   (let [x0 (+ (* x tile-size) (* 0.5 tile-size))
         y0 (+ (* y tile-size) (* 0.5 tile-size))
-        color (->> player-color (player) (second))]
+        color (->> player-color player second)]
     (c/draw-> canvas
               (c/text (- x0 17) (+ y0 18) "D" color 50)
               (c/line (+ x0 3) (- y0 15) (+ x0 3) (+ y0 15) color 3)
@@ -88,10 +88,10 @@
         y (Math/floor (/ y-coord tile-size))]
     [(int x) (int y)]))
 
-(defrecord Game-Board [name board locked args big-text]
+(defrecord Game-Board [name board locked props big-text]
   wdg/Widget
   (coord [this canvas] [0 0 board-size board-size])
-  (defaults [this] this);;(assoc-in this [:args :skip-redrawing] {:on-unselect true :on-click true :on-hover true}))
+  (defaults [this] (assoc-in this [:props :can-hide?] false))
   (before-drawing [this] this)
   (draw [this canvas]
           (draw-game canvas (-> this :board :game))
@@ -101,21 +101,16 @@
         this)
   (after-drawing [this] this))
 
-;; override hiding, since the gameboard fills out the entire screen anyway
-(extend-protocol wdg/Hide
-  Game-Board
-  (hide [this canvas] this))
-
 (defmulti game (fn [type ^Game-Board board data] type))
 
 (defmethod game :default [type board data] board)
 
 (defn create-board
-  [game]
-    (->Game-Board "Dame" game nil {:x 0 :y 0 :z -5} nil))
+  [name game]
+    (->Game-Board name game nil {:x 0 :y 0 :z -5} nil))
 
 (defmethod wdg/widget-event [dame.game_board.Game-Board :mouse-clicked]
-  [_ _ widgets widget x y]
+  [widgets {:keys [widget x y]}]
   (if (not (:locked widget))
     (let [widget (game :tile-clicked widget (get-tile x y))]
       (assoc widgets (:name widget) widget))
