@@ -90,14 +90,14 @@
 
 (defrecord Game-Board [name board locked props big-text]
   wdg/Widget
-  (coord [this canvas] [0 0 board-size board-size])
+  (coord [this context] [0 0 board-size board-size])
   (defaults [this] (assoc-in this [:props :can-hide?] false))
   (before-drawing [this] this)
-  (draw [this canvas]
-          (draw-game canvas (-> this :board :game))
+  (draw [this context]
+          (draw-game context (-> this :board :game))
           (when-let [banner (:big-text this)]
-            (show-banner canvas banner))
-          (show-player-label canvas (-> this :board :players first first))
+            (show-banner context banner))
+          (show-player-label context (-> this :board :players first first))
         this)
   (after-drawing [this] this))
 

@@ -2,8 +2,19 @@
 A Clojure implementation of Dame, a german checker game.
 
 requirement:
-Get the OpenJDK 17 from [Adoptium](https://adoptium.net/)
+Get the OpenJDK 21 from [Adoptium](https://adoptium.net/)
 (This is the former [AdoptOpenJDK](https://adoptopenjdk.net/))
+
+or
+
+```
+sudo apt-get update
+sudo apt-get install temurin-21-jdk
+```
+
+Download the latest release package [Dame Releases] (https://github.com/MikeHardIce/Dame/releases)
+Unzip 
+In most systems you simple double click on the Dame.jar file
 
 ## New
 Now playable vs Computer (easy)

@@ -2,7 +2,6 @@
   (:require [dame.game-board :as board]
             [dame.game-logic :as logic]
             [strigui.core :as gui]
-            [clojure.set :as s]
             [clojure.core.async :refer [go-loop timeout <!]])
   (:import [java.awt Color])
   (:gen-class))
